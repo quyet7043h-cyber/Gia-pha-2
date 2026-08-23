@@ -417,23 +417,23 @@ export function EditPersonForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="courtesy_name">Tên tự</Label>
+            <Label htmlFor="courtesy_name">Tên tự/ Tên hiệu (Nếu có)</Label>
             <Input
               id="courtesy_name"
               maxLength={100}
               value={courtesyName}
               onChange={(e) => setCourtesyName(e.target.value)}
-              placeholder="Tên đặt khi trưởng thành, dùng nơi trang trọng"
+              placeholder="Tên chữ Nho, ví dụ: Thừa Thông"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="nickname">Tên húy</Label>
+            <Label htmlFor="nickname">Tên thường gọi/ Tên thứ</Label>
             <Input
               id="nickname"
               maxLength={100}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="Tên khai sinh, kiêng gọi sau khi mất"
+              placeholder="Tên gọi nhau, gọi ở nhà, làng xóm"
             />
           </div>
           <div className="space-y-2">
@@ -443,7 +443,7 @@ export function EditPersonForm({
               maxLength={100}
               value={posthumousName}
               onChange={(e) => setPosthumousName(e.target.value)}
-              placeholder="Tên đặt khi mất, dùng trong văn cúng"
+              placeholder="Tên đặt khi mất, Phong hiệu được trao tặng sau mất"
             />
           </div>
 
