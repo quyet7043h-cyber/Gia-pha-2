@@ -2746,7 +2746,7 @@ export type Database = {
         ]
       }
     }
-    Functions: { 
+    Functions: {
       _inlaw_person_card: {
         Args: {
           hide_living: boolean
