@@ -88,24 +88,22 @@ export function VnNames() {
         hiển thị mọi nơi (cây, danh bạ, link chia sẻ).
       </P>
 
-      <H3>Tên tự</H3>
+      <H3>Tên tự/ Tên hiệu (Nếu có)</H3>
       <P>
-        Tên đặt khi trưởng thành (thường tuổi 20 — lễ Quán). Dùng nơi trang
-        trọng, văn thư, người ngoài xưng hô. Ví dụ: cụ Nguyễn Du có tên tự là{" "}
+        Tên đặt khi trưởng thành (thường tuổi 20 — lễ Quán). Tên ngày xưa đi học chữ Nho sẽ hay có tên tự.
+        Ví dụ: cụ Nguyễn Du có tên tự là{" "}
         <Code>Tố Như</Code>.
       </P>
 
-      <H3>Tên húy</H3>
+      <H3>Tên thường gọi/ Tên thứ</H3>
       <P>
-        Tên khai sinh, do cha mẹ đặt. Sau khi người mất, con cháu kiêng gọi
-        thẳng — chỉ dùng trong văn cúng để báo danh. Trên gia phả ghi để các
-        đời sau biết tránh đặt tên trùng.
+        Tên ngày xưa các cụ hay gọi nhau theo thứ bậc, con trưởng. Người trong làng thường chỉ nhớ tên này
       </P>
 
       <H3>Tên thụy</H3>
       <P>
         Tên đặt sau khi mất — dùng trong văn cúng, khắc trên bia mộ. Thường
-        do con cháu hoặc nhà chùa đặt. Có ý nghĩa khen ngợi đức tính.
+        do con cháu hoặc làng xã đặt. Có ý nghĩa khen ngợi đức tính. 
       </P>
 
       <Callout kind="tip" title="Không biết thì bỏ trống">
