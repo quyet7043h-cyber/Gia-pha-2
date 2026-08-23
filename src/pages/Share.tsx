@@ -102,6 +102,7 @@ export default function Share() {
   // Hai nguồn: /share/:token (link chia sẻ) HOẶC /xem/clans/:clanId (xem trước
   // công khai dòng họ, không cần đăng nhập). clanId → luôn là cây (tree_view).
   const { token, clanId } = useParams<{ token?: string; clanId?: string }>();
+  const shouldJoin = !!token;
   const publicClan = !token && !!clanId;
   const containerRef = useRef<HTMLDivElement>(null);
   const shareWrapRef = useRef<HTMLDivElement>(null);
