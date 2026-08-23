@@ -179,7 +179,13 @@ export default function Share() {
     );
     return () => cancelAnimationFrame(r);
   }, [tab]);
+useEffect(() => {
+  if (!shouldJoin || !token) return;
 
+  joinClanByShareToken(token).catch((err) => {
+    console.error("Không thể tham gia gia phả:", err);
+  });
+}, [shouldJoin, token]);
   const { data, isLoading, error } = useQuery({
     queryKey: ["share-view", token ?? `clan:${clanId}`],
     queryFn: () =>
