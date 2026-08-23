@@ -282,8 +282,8 @@ export default function PersonDetail() {
               </CardHeader>
               <CardContent className="space-y-2 text-base">
                 <DetailRow label="Giới tính" value={person.gender === "M" ? "Nam" : "Nữ"} />
-                <DetailRow label="Tên tự" value={person.courtesy_name} />
-                <DetailRow label="Tên húy" value={person.nickname} />
+                <DetailRow label="Tên tự/ Tên hiệu (Nếu có)" value={person.courtesy_name} />
+                <DetailRow label="Tên thường gọi/ Tên thứ" value={person.nickname} />
                 <DetailRow label="Tên thụy" value={person.posthumous_name} />
                 <DetailRow
                   label="Ngày sinh"
