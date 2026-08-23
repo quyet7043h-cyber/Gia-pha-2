@@ -730,11 +730,40 @@ export function ClanBookPdf({ clan, data, include, photoByPersonId, coverByItemI
             chữ cái. Ghi kèm vợ/chồng trong họ để tra ngược.
           </Text>
           {chunk(
-            [...inLaws].sort((a, b) =>
-              a.full_name.localeCompare(b.full_name, "vi"),
-            ),
-            3,
-          ).map((row, i) => (
+  [...inLaws].sort((a, b) => {
+    // Dâu/rể vẫn là nhóm riêng, nhưng thứ tự dựa theo
+    // thế hệ của người huyết thống mà họ kết hôn vào họ.
+    //
+    // Nếu không xác định được người phối ngẫu huyết thống,
+    // đưa xuống cuối và dùng tên làm thứ tự phụ.
+
+    const getInLawGeneration = (person: typeof a): number => {
+      const spouseIds = spousesByPerson.get(person.id) ?? [];
+
+      const spouseGenerations = spouseIds
+        .map((spouseId) => personById.get(spouseId)?.generation)
+        .filter((g): g is number => g != null);
+
+      if (spouseGenerations.length === 0) {
+        return Number.MAX_SAFE_INTEGER;
+      }
+
+      return Math.min(...spouseGenerations);
+    };
+
+    const genA = getInLawGeneration(a);
+    const genB = getInLawGeneration(b);
+
+    // 1. Ưu tiên đời
+    if (genA !== genB) {
+      return genA - genB;
+    }
+
+    // 2. Cùng đời → giữ thứ tự ổn định theo tên
+    return a.full_name.localeCompare(b.full_name, "vi");
+  }),
+  3,
+).map((row, i) => (
             <View key={i} style={styles.cardRow} wrap={false}>
               {row.map((p, ci) => (
                 <View
