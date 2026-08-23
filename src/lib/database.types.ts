@@ -2747,12 +2747,6 @@ export type Database = {
       }
     }
     Functions: {
-      join_clan_by_share_token: {
-        Args: {
-          p_token: string
-         }
-         Returns: Json
-      }
       _inlaw_person_card: {
         Args: {
           hide_living: boolean
@@ -2929,6 +2923,7 @@ export type Database = {
       is_clan_admin: { Args: { target_clan: string }; Returns: boolean }
       is_clan_member: { Args: { target_clan: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      join_clan_by_share_token: { Args: { p_token: string }; Returns: Json }
       merge_persons: {
         Args: { p_loser: string; p_winner: string }
         Returns: Json
