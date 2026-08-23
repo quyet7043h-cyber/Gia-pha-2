@@ -14,6 +14,7 @@ import { useToast } from "@/components/Toast";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { track } from "@/lib/analytics";
 import { bloodlineIds } from "@/lib/bloodline";
+import { joinClanByShareToken } from "@/lib/queries/clan-members";
 import type { TreeData } from "@/lib/queries/tree";
 
 // Lazy — kéo three.js + 3d-force-graph ra chunk riêng, chỉ tải khi bật 3D.
