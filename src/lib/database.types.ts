@@ -2748,11 +2748,11 @@ export type Database = {
     }
     Functions: {
       join_clan_by_share_token: {
-         Args: {
-           p_token: string
+        Args: {
+          p_token: string
          }
          Returns: Json
-     }
+      }
       _inlaw_person_card: {
         Args: {
           hide_living: boolean
