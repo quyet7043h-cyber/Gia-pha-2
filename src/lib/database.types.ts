@@ -2748,8 +2748,8 @@ export type Database = {
     }
     Functions: {
       join_clan_by_share_token: {
-        Args: {
-          p_token: string
+      Args: {
+        p_token: string
          }
          Returns: Json
       }
@@ -2759,7 +2759,7 @@ export type Database = {
           p: Database["public"]["Tables"]["persons"]["Row"]
         }
         Returns: Json
-      }
+       }
       _person_ancestors: {
         Args: { p_root: string }
         Returns: {
