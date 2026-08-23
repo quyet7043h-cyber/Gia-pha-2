@@ -317,7 +317,7 @@ export function AppDrawer({ open, onClose }: Props) {
           {/* Website + liên hệ hỗ trợ — meta links cuối sidebar */}
           <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
             <a
-              href="https://donghoviet.thaohk.com"
+              href="src/components/AppDrawer.tsx"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 hover:text-primary"
