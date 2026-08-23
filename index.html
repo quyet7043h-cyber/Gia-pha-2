@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- maximum-scale=1 + user-scalable=no chặn pinch-zoom hệ thống
+         (family-chart trên trang cây đã xử lý pinch riêng) và tránh
+         iOS tự zoom khi focus vào input có font-size < 16px. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#7A2230" />
+    <link rel="icon" type="image/svg+xml" href="/icons/app-icon.svg" />
+    <link rel="alternate icon" type="image/png" sizes="64x64" href="/icons/app-icon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/app-icon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Dòng Họ Việt" />
+
+    <meta name="description" content="Ứng dụng quản lý gia phả dòng họ — lưu phả hệ, cây gia phả nhiều đời, ngày giỗ âm lịch, sự kiện và thông báo." />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dòng Họ Việt" />
+    <meta property="og:title" content="Dòng Họ Việt — Quản lý gia phả dòng họ" />
+    <meta property="og:description" content="Lưu phả hệ dòng họ, vẽ cây nhiều đời, ghi ngày giỗ theo âm lịch, nhắc sự kiện sinh nhật. Hỗ trợ chia sẻ riêng tư hoặc công khai." />
+    <meta property="og:image" content="https://giapha.thaohk.com/icons/og-banner.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Dòng Họ Việt — quản lý gia phả dòng họ" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Dòng Họ Việt — Quản lý gia phả dòng họ" />
+    <meta name="twitter:description" content="Lưu phả hệ dòng họ, vẽ cây nhiều đời, ghi ngày giỗ theo âm lịch, nhắc sự kiện sinh nhật." />
+    <meta name="twitter:image" content="https://giapha.thaohk.com/icons/og-banner.png" />
+
+    <title>Dòng Họ Việt — Quản lý gia phả dòng họ</title>
+    <script>
+      // Apply theme class BEFORE first paint so dark-mode users
+      // don't flash the light palette while the React bundle loads.
+      // Cũng sync meta theme-color (status bar iOS Safari + address
+      // bar Android Chrome) — đỏ rượu vang trong dark mode quá chói
+      // nên dark dùng warm-ink #1A1612 hợp với background.
+      // Mirrors lib/theme.ts; keep these in sync if either changes.
+      (function () {
+        try {
+          var v = localStorage.getItem("family-tree:theme");
+          var dark =
+            v === "dark" ||
+            ((v === "system" || !v) &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark
+            ? "dark"
+            : "light";
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute("content", dark ? "#1A1612" : "#7A2230");
+          }
+        } catch (e) {
+          /* private mode — leave default light */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

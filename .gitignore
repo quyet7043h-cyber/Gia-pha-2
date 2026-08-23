@@ -1,0 +1,45 @@
+node_modules
+dist
+dist-ssr
+dev-dist
+*.local
+*.tsbuildinfo
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Test
+coverage
+playwright-report
+test-results
+/videos/
+.env.deploy
+
+# One-off migration data (contains user emails + temp passwords)
+scripts/.migration-recipients.json
+scripts/.clan-admin-assignments.json
+
+# Local Netlify folder
+.netlify
+/videos/_dist/
+backups-oldapp/
+
+# Ops/security notes (chứa thông tin hạ tầng nhạy cảm) — giữ local
+docs/security-hardening-*.md

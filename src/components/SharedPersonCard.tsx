@@ -1,0 +1,321 @@
+import { useState } from "react";
+
+import { ContributeDialog } from "@/components/ContributeDialog";
+import { PersonAvatar } from "@/components/PersonAvatar";
+import { IconScroll } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { formatLunarAnniversary, formatLunarDate } from "@/lib/lunarDate";
+import { formatPartialDate } from "@/lib/partialDate";
+import type {
+  ShareViewFamily,
+  ShareViewPerson,
+  ShareViewRestingPlace,
+} from "@/lib/queries/share-view";
+
+const RP_KIND_LABEL: Record<ShareViewRestingPlace["kind"], string> = {
+  grave: "Mộ / chôn cất",
+  ashes_temple: "Gửi tro cốt ở chùa",
+  columbarium: "Nhà lưu tro / tháp cốt",
+  scattered: "Rải tro",
+  other: "Khác",
+};
+
+interface Props {
+  focal: ShareViewPerson;
+  persons: ShareViewPerson[];
+  families: ShareViewFamily[];
+  /** Resting places returned by share-view (single_person scope). */
+  restingPlaces?: ShareViewRestingPlace[];
+  /** Offset hiển thị đời của clan share (0 hoặc 1). */
+  genOffset: number;
+  /** Pass the share link token so guests can submit contributions
+   *  via the submit-contribution edge function. Omit to hide the
+   *  contribution UI entirely. */
+  clanId?: string;
+  shareToken?: string;
+}
+
+/**
+ * Read-only person card rendered by /share/:token when the share link
+ * was minted with scope='single_person'. Layout is intentionally close
+ * to the in-app PersonDetail page so a relative scanning the QR sees
+ * the same vocabulary, just without the edit controls.
+ *
+ * Living-person masking already happened in the Edge Function — every
+ * field we receive is safe to display.
+ */
+export function SharedPersonCard({
+  focal,
+  persons,
+  families,
+  genOffset,
+  clanId,
+  shareToken,
+  restingPlaces,
+}: Props) {
+  const [contribOpen, setContribOpen] = useState(false);
+  const byId = new Map(persons.map((p) => [p.id, p]));
+  const myPlaces = (restingPlaces ?? []).filter((rp) =>
+    rp.person_ids.includes(focal.id),
+  );
+
+  // Parents — via focal.birth_family_id. Either may be null in the data.
+  const birthFamily = focal.birth_family_id
+    ? families.find((f) => f.id === focal.birth_family_id) ?? null
+    : null;
+  const father = birthFamily?.husband_id ? byId.get(birthFamily.husband_id) ?? null : null;
+  const mother = birthFamily?.wife_id ? byId.get(birthFamily.wife_id) ?? null : null;
+
+  // Marriages — focal participates as either spouse.
+  const marriages = families.filter(
+    (f) => f.husband_id === focal.id || f.wife_id === focal.id,
+  );
+  const spouses = marriages
+    .map((f) => {
+      const otherId = f.husband_id === focal.id ? f.wife_id : f.husband_id;
+      return otherId ? byId.get(otherId) ?? null : null;
+    })
+    .filter((p): p is ShareViewPerson => p !== null);
+
+  // Children — anyone whose birth_family is one of the focal's marriages.
+  const marriageIds = new Set(marriages.map((f) => f.id));
+  const children = persons.filter(
+    (p) => p.birth_family_id && marriageIds.has(p.birth_family_id),
+  );
+
+  const birthLunar =
+    focal.birth_lunar_year || focal.birth_lunar_month || focal.birth_lunar_day
+      ? formatLunarDate({
+          year: focal.birth_lunar_year ?? undefined,
+          month: focal.birth_lunar_month ?? undefined,
+          day: focal.birth_lunar_day ?? undefined,
+        })
+      : null;
+  const deathLunar =
+    focal.death_lunar_year || focal.death_lunar_month || focal.death_lunar_day
+      ? formatLunarDate({
+          year: focal.death_lunar_year ?? undefined,
+          month: focal.death_lunar_month ?? undefined,
+          day: focal.death_lunar_day ?? undefined,
+        })
+      : null;
+  const anniv = formatLunarAnniversary({
+    month: focal.death_anniv_lunar_month ?? undefined,
+    day: focal.death_anniv_lunar_day ?? undefined,
+  });
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-6 p-4 sm:p-6">
+      <header className="flex items-center gap-3">
+        <PersonAvatar
+          gender={focal.gender}
+          photoUrl={focal.photo_url ?? null}
+          size={64}
+        />
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <h1 className="clan-name text-2xl sm:text-3xl font-semibold truncate">
+            {focal.full_name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {focal.is_root && (
+              <span className="text-accent font-medium">Thuỷ tổ • </span>
+            )}
+            {focal.generation !== null && (
+              <>Đời {focal.generation - genOffset}</>
+            )}
+            {!focal.is_living && (
+              <span>
+                {focal.generation !== null && " • "}đã mất
+                {focal.death_date?.slice(0, 4) &&
+                  ` • ${focal.death_date.slice(0, 4)}`}
+              </span>
+            )}
+          </p>
+        </div>
+        {clanId && shareToken && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setContribOpen(true)}
+            className="shrink-0"
+          >
+            <IconScroll className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Đề xuất sửa</span>
+          </Button>
+        )}
+      </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Thông tin cơ bản</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-base">
+          <Row label="Giới tính" value={focal.gender === "M" ? "Nam" : "Nữ"} />
+          <Row label="Tên tự" value={focal.courtesy_name ?? null} />
+          <Row label="Tên húy" value={focal.nickname ?? null} />
+          <Row label="Tên thụy" value={focal.posthumous_name ?? null} />
+          <Row
+            label="Ngày sinh"
+            value={
+              formatPartialDate({
+                date: focal.birth_date,
+                precision: focal.birth_date_precision,
+              }) || null
+            }
+          />
+          <Row label="Ngày sinh (âm)" value={birthLunar} />
+          {!focal.is_living && (
+            <>
+              <Row
+                label="Ngày mất"
+                value={
+                  formatPartialDate({
+                    date: focal.death_date,
+                    precision: focal.death_date_precision,
+                  }) || null
+                }
+              />
+              <Row label="Ngày mất (âm)" value={deathLunar} />
+              <Row label="Ngày giỗ" value={anniv || null} />
+            </>
+          )}
+          <Row label="Nơi sinh" value={focal.birth_place ?? null} />
+          <Row label="Nơi an táng" value={focal.burial_place ?? null} />
+          {myPlaces.map((rp) => (
+            <div key={rp.id} className="pt-2">
+              <p className="text-sm text-muted-foreground mb-1">
+                Mộ phần / tro cốt
+              </p>
+              <p className="font-medium">
+                {rp.name || rp.location_name || RP_KIND_LABEL[rp.kind]}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {RP_KIND_LABEL[rp.kind]}
+                {rp.location_name ? ` · ${rp.location_name}` : ""}
+                {rp.location_detail ? ` · ${rp.location_detail}` : ""}
+              </p>
+              {rp.address && <p className="text-sm">{rp.address}</p>}
+              {rp.latitude != null && rp.longitude != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${rp.latitude},${rp.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Chỉ đường
+                </a>
+              )}
+              {rp.photo_urls.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {rp.photo_urls.map((u, i) => (
+                    <img
+                      key={i}
+                      src={u}
+                      alt=""
+                      className="aspect-square w-full rounded-md object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {focal.bio && (
+            <div className="pt-2">
+              <p className="text-sm text-muted-foreground mb-1">Tiểu sử</p>
+              <p className="whitespace-pre-wrap">{focal.bio}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {(father || mother || spouses.length > 0 || children.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quan hệ</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {(father || mother) && (
+              <Group label="Cha mẹ" items={[father, mother].filter(Boolean) as ShareViewPerson[]} />
+            )}
+            {spouses.length > 0 && <Group label="Vợ / chồng" items={spouses} />}
+            {children.length > 0 && <Group label="Con cái" items={children} />}
+          </CardContent>
+        </Card>
+      )}
+
+      {clanId && shareToken && (
+        <ContributeDialog
+          open={contribOpen}
+          onClose={() => setContribOpen(false)}
+          clanId={clanId}
+          shareToken={shareToken}
+          focalPerson={{
+            id: focal.id,
+            full_name: focal.full_name,
+            gender: focal.gender,
+            is_living: focal.is_living,
+            birth_date: focal.birth_date,
+            death_date: focal.death_date,
+            courtesy_name: focal.courtesy_name ?? null,
+            birth_place: focal.birth_place ?? null,
+            burial_place: focal.burial_place ?? null,
+            bio: focal.bio ?? null,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  if (value === null || value === undefined || value === "" || value === false) {
+    return null;
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-0.5 sm:gap-2">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="break-words">{value}</span>
+    </div>
+  );
+}
+
+function Group({ label, items }: { label: string; items: ShareViewPerson[] }) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-base font-semibold">{label}</h3>
+      <ul className="space-y-1.5">
+        {items.map((p) => (
+          <li
+            key={p.id}
+            className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
+          >
+            <PersonAvatar
+              gender={p.gender}
+              photoUrl={p.photo_url ?? null}
+              size={40}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{p.full_name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {p.gender === "M" ? "Nam" : "Nữ"}
+                {!p.is_living &&
+                  ` · đã mất${
+                    p.death_date ? ` ${p.death_date.slice(0, 4)}` : ""
+                  }`}
+                {p.is_living &&
+                  p.birth_date &&
+                  ` · sinh ${p.birth_date.slice(0, 4)}`}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

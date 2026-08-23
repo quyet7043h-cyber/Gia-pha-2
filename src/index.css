@@ -1,0 +1,491 @@
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
+@import "@fontsource/noto-serif/400.css";
+@import "@fontsource/noto-serif/600.css";
+@import "@fontsource/noto-serif/700.css";
+/* Font cho thiệp chia sẻ — đều có subset tiếng Việt (đủ dấu). */
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/dancing-script/600.css";
+@import "@fontsource/dancing-script/700.css";
+
+/* THƯ PHÁP tiếng Việt: hiện chưa có file font hợp lệ → dùng tạm Dancing
+   Script (nút "Thư pháp"). Khi có file, đặt vào public/fonts/svn-thuphap.woff2
+   rồi BỎ COMMENT khối @font-face dưới đây + thêm "SVN-ThuPhap" lại vào
+   src/lib/cards/fonts.ts (CARD_FONTS + FAMILIES).
+@font-face {
+  font-family: "SVN-ThuPhap";
+  src: url("/fonts/svn-thuphap.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 400 700;
+}
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Oxblood palette — light mode (warm paper) */
+    --background: 38 60% 96%;          /* #FBF7F0 paper */
+    --foreground: 20 14% 14%;          /* #2A2320 ink */
+
+    --card: 38 60% 96%;
+    --card-foreground: 20 14% 14%;
+
+    --popover: 38 60% 96%;
+    --popover-foreground: 20 14% 14%;
+
+    --primary: 0 45% 33%;              /* #7A2E2E oxblood */
+    --primary-foreground: 38 60% 96%;
+
+    --secondary: 36 30% 90%;
+    --secondary-foreground: 20 14% 14%;
+
+    --muted: 36 30% 90%;
+    --muted-foreground: 25 9% 44%;     /* #7A6F66 warm gray */
+
+    --accent: 40 64% 45%;              /* #B8862A bronze */
+    --accent-foreground: 38 60% 96%;
+
+    --destructive: 0 70% 51%;          /* #D92E2E bright red — distinct from oxblood */
+    --destructive-foreground: 38 60% 96%;
+
+    --border: 36 41% 86%;              /* #E8E0D2 */
+    --input: 36 41% 86%;
+    --ring: 0 45% 33%;                  /* focus ring = primary */
+
+    /* family-chart card fills (consumed via --male-color etc.
+     * set inline on the .f3 container in Tree.tsx / Share.tsx).
+     * Light pastel tones to match the warm-paper bg. */
+    --tree-card-male: #D4DDE4;
+    --tree-card-female: #E8D2CC;
+    --tree-card-genderless: #E8E0D2;
+    --tree-card-text: #2A2320;
+
+    --radius: 0.5rem;
+  }
+
+  /* Dark mode — warm ink palette. Same oxblood + bronze accents,
+   * shifted to remain legible against a dark warm background. The
+   * `.dark` class is applied to <html> by lib/theme.ts when the
+   * user chooses "tối" or when their system preference is dark
+   * and the choice is "hệ thống". */
+  .dark {
+    --background: 24 14% 8%;            /* #1A1612 warm ink */
+    --foreground: 38 30% 92%;           /* #EFE9DB cream */
+
+    --card: 24 14% 12%;                 /* #221E19 slightly lifted */
+    --card-foreground: 38 30% 92%;
+
+    --popover: 24 14% 12%;
+    --popover-foreground: 38 30% 92%;
+
+    --primary: 0 60% 58%;               /* #D24545 brighter oxblood */
+    --primary-foreground: 38 30% 92%;
+
+    --secondary: 24 12% 18%;
+    --secondary-foreground: 38 30% 92%;
+
+    --muted: 24 12% 18%;                /* #2B2520 */
+    --muted-foreground: 35 18% 70%;     /* #BAB1A3 warm grey */
+
+    --accent: 40 65% 60%;               /* #D4A045 bronze, brighter */
+    --accent-foreground: 24 14% 8%;
+
+    --destructive: 0 70% 60%;           /* #E04D4D */
+    --destructive-foreground: 38 30% 92%;
+
+    /* Card border literally matches input border color
+     * (rgb(56, 50, 46) = hsl(24, 10%, 20%)) — every contained
+     * surface uses the same computed border-color. */
+    --border: 24 10% 20%;
+    --input: 24 10% 20%;
+    --ring: 0 60% 58%;
+
+    /* Darker family-chart card fills so cream text (--foreground
+     * 38 30% 92%) reads against them. Same hue family as light
+     * mode (cool blue / warm rose / neutral) but shifted to
+     * ~25% lightness so contrast clears 4.5:1 against cream. */
+    --tree-card-male: #2F3D48;
+    --tree-card-female: #4A2F2D;
+    --tree-card-genderless: #38322B;
+    --tree-card-text: #EFE9DB;
+  }
+
+  /* Force every Tailwind `border` utility (without an explicit
+   * border-color suffix) to use our --border CSS var instead of
+   * Tailwind's hard-coded gray-200 default. Without this rule
+   * a bare `border` on a card stays light grey in dark mode
+   * regardless of how we tune --border, because the utility
+   * never reads the variable. shadcn ships this same line in
+   * every starter for the same reason. */
+  * {
+    @apply border-border;
+  }
+
+  /* Base font size — 17px, scales with user system preference via rem */
+  html {
+    font-size: 17px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto,
+      sans-serif;
+    line-height: 1.6;
+    /* iOS Safari ignores user-scalable=no since iOS 10, so the
+       viewport meta alone can't block pinch-zoom. Disabling pinch
+       at the touch-action level still works there. pan-y keeps
+       vertical scrolling; family-chart's own pinch/pan is handled
+       by an inner element with its own touch-action override. */
+    touch-action: pan-y;
+  }
+
+  /* Hide scrollbars on touch-only devices (mobile / most tablets).
+     Scroll still works; just no persistent grey track. Desktop and
+     hover-capable tablets keep native scrollbars so users have a
+     visible scroll indicator. */
+  @media (hover: none) {
+    html,
+    body,
+    *::-webkit-scrollbar {
+      scrollbar-width: none; /* Firefox */
+    }
+    *::-webkit-scrollbar {
+      display: none; /* WebKit / Blink */
+      width: 0;
+      height: 0;
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  .clan-name {
+    font-family: "Noto Serif", Georgia, serif;
+    @apply tracking-tight;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Ensure tap targets meet 44×44 (Apple HIG) */
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * family-chart overrides
+ *
+ * The library hard-codes stroke="#fff" on every `path.link` it draws,
+ * which is invisible on our paper background. SVG presentation
+ * attributes are overridden by CSS, so this rule wins without any
+ * !important. Use a muted ink-ish tone so the lines connect cards
+ * legibly without competing with the cards themselves.
+ * ---------------------------------------------------------------- */
+
+/* Make the f3 canvas + main SVG fill their container in every layout
+ * (the library's inline styles don't survive in some flex chains). */
+.f3 {
+  display: block;
+}
+.f3 svg.main_svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.f3 svg.main_svg path.link {
+  stroke: #7A6F66; /* matches design palette --muted */
+  stroke-width: 1.5px;
+  opacity: 0.55;
+}
+.f3 svg.main_svg path.link.f3-path-to-main {
+  stroke: #7A2E2E; /* oxblood — highlight the path back to focal */
+  opacity: 0.9;
+}
+
+/* Dark-mode family-chart overrides — the library hard-codes a few
+ * colours we need to flip for legibility on a dark warm background.
+ * Card fills + text get swapped via --tree-card-* variables
+ * declared in :root + .dark above; this block just handles the
+ * link/path stroke + badge colour. */
+.dark .f3 svg.main_svg path.link {
+  stroke: #8A8278;
+  opacity: 0.7;
+}
+.dark .f3 svg.main_svg path.link.f3-path-to-main {
+  stroke: #E26B6B;
+  opacity: 1;
+}
+.dark .f3 svg.main_svg .gen-badge rect {
+  fill: #D24545;
+}
+
+/* Card text: smaller body font so Vietnamese full names + the meta
+   line stay legible without overflowing the clip rect. The library
+   sets dy=14 per tspan, so 13px font sits nicely inside that line
+   height. Fill comes from --tree-card-text so dark mode swaps to
+   cream against the darker cards. */
+.f3 svg.main_svg .card-text text {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--tree-card-text);
+}
+.f3 svg.main_svg .card-text tspan:nth-child(2) {
+  font-size: 11px;
+  fill: var(--tree-card-text);
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Circular avatar — clip the rectangular image into a circle that
+   fills the card's img_w/h box. !important beats the library's
+   `clip-path="url(#card_image_clip)"` presentation attribute. */
+.f3 svg.main_svg .card_image {
+  clip-path: circle(50%) !important;
+}
+
+/* Generation badge ("Đời N") — the library applies
+   `.f3 svg.main_svg text { fill: currentColor }` which overrides the
+   white `fill` attribute we set inline on the badge text. A more
+   specific selector (extra `.gen-badge` class lifts specificity by
+   one class) wins back. */
+.f3 svg.main_svg .gen-badge rect {
+  fill: #7A2E2E; /* oxblood */
+}
+.f3 svg.main_svg .gen-badge text {
+  fill: #FFFFFF;
+}
+
+/* Card quick-action icons (edit, add) — kept always visible on
+   touch devices (no hover event) and hidden-until-hover on devices
+   that have a real pointer. Without the @media (hover: hover) gate
+   mobile users could never see / tap the icons.
+   The `.card_cont` group is family-chart's per-card wrapper;
+   hovering or focusing it reveals the action cluster on desktop. */
+.f3 svg.main_svg .card-actions {
+  transition: opacity 0.15s;
+}
+@media (hover: hover) {
+  .f3 svg.main_svg .card-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .f3 svg.main_svg .card_cont:hover .card-actions,
+  .f3 svg.main_svg .card_cont:focus-within .card-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+.f3 svg.main_svg .card-action {
+  cursor: pointer;
+}
+.f3 svg.main_svg .card-action:hover circle {
+  fill: #F0E6D1;
+}
+
+/* ---------------------------------------------------------------- *
+ * Print stylesheet — Ctrl/Cmd-P from the Tree page (or Share view)
+ *
+ * The browser's PDF/print path is a useful complement to the
+ * server-side ClanBook PDF: it lets users print the live tree
+ * with the current focal + orientation. We hide the entire app
+ * shell + page toolbars, expand the family-chart canvas to fill
+ * the page, and surface a small print-only header block so the
+ * printout has a title.
+ *
+ * Classes used:
+ *   .print-hide  — applied to toolbars / quick-help text on the
+ *                  Tree + Share pages so they vanish on print.
+ *   .print-only  — a block that ONLY shows on print (hidden in the
+ *                  normal flow) — used for the title strip.
+ * ---------------------------------------------------------------- */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* A3 landscape gives roughly double A4's surface so a mid-sized
+   * tree fits without each card shrinking past legibility. Printers
+   * that only handle A4 will offer "fit to printable area" in their
+   * dialog, scaling the whole sheet down — the cards stay
+   * proportional, just smaller. */
+  @page {
+    size: A3 landscape;
+    margin: 1cm;
+  }
+
+  /* Drop the warm paper background so toner doesn't fill the page. */
+  body,
+  .bg-background,
+  .bg-card {
+    background: #ffffff !important;
+  }
+
+  /* App shell chrome — sticky header, drawer, bottom tabs, status
+   * banners, toasts — none of it belongs on paper. The selectors
+   * are tight enough that legitimate page-level <header>/<nav>
+   * elements (e.g. the Account page header) also vanish; that's
+   * what we want — only the chart should print. */
+  header,
+  nav,
+  aside,
+  [role="dialog"],
+  [aria-live="polite"],
+  [aria-live="assertive"],
+  .print-hide {
+    display: none !important;
+  }
+
+  /* The reverse: explicit print-only blocks like the title strip. */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Tighten the page container so the chart can use full width.
+   * ClanLayout's outer div applies `lg:pl-72` + `pb-20` to make
+   * room for the sidebar / bottom tab bar; on print those reserve
+   * space that ends up as a blank first column / final blank
+   * page. Same story for `<main class="py-6 px-4">`.
+   * Wildcard attribute selectors target the specific Tailwind
+   * classes without having to add helper classes to every
+   * layout. */
+  body,
+  body > div,
+  body > div > div,
+  [class~="lg:pl-72"],
+  [class~="pl-72"],
+  [class~="pb-20"],
+  main,
+  .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+  }
+
+  /* Expand the family-chart canvas to fill the printable area.
+   * A3 landscape = 42×30 cm; with 1 cm margins all round and
+   * ~2 cm reserved for the title strip we get 40×27 cm. The
+   * beforeprint hook in Tree.tsx mirrors these dimensions into
+   * inline pixel sizes on the container so family-chart can fit
+   * the whole tree into the same box before the snapshot runs.
+   * NOTE: no `!important` on dimensions here — the inline style
+   * applied during beforeprint needs to win. */
+  .f3 {
+    width: 40cm;
+    height: 27cm;
+    min-height: 0 !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    page-break-before: avoid;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* family-chart's pan/zoom transforms keep working — print just
+   * captures whatever's currently in view. We do NOT reset the
+   * transform here: the user already chose a focal + orientation;
+   * they likely want that exact framing on paper too. */
+}
+
+/* ─── Mascot animations ────────────────────────────────────────────
+ * The dragon is a static SVG; CSS gives it life:
+ *   - idle: a slow up-down bob + tiny scaleY breath so it reads as
+ *     a swimming creature treading water, not a frozen sticker
+ *   - has-tip: button itself pulses an amber ring (box-shadow) so
+ *     the cue lands without distorting the dragon shape
+ *   - hover/active: small scale step for tactile feel
+ */
+@keyframes mascot-attention-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+@keyframes mascot-swim {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  25%      { transform: translateY(-2px) scaleY(0.97); }
+  50%      { transform: translateY(0) scaleY(1.03); }
+  75%      { transform: translateY(2px) scaleY(0.97); }
+}
+.mascot-emoji {
+  display: inline-block;
+  animation: mascot-swim 3.5s ease-in-out infinite;
+  transition: transform 0.2s ease-out;
+}
+.mascot-icon {
+  transition: transform 0.15s ease-out, box-shadow 0.2s ease-out;
+}
+.mascot-icon.mascot-has-tip {
+  animation: mascot-attention-pulse 1.8s ease-in-out infinite;
+}
+.mascot-icon:hover .mascot-emoji {
+  animation-play-state: paused;
+  transform: scale(1.12);
+}
+.mascot-icon:active {
+  transform: scale(0.92);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-icon.mascot-has-tip,
+  .mascot-emoji {
+    animation: none;
+  }
+}
+
+/* Native date/datetime picker icon — đẩy về inner-right.
+ *
+ * Mặc định Chromium ghim icon ngay sau text spinner (dd/mm/yyyy …) →
+ * input rộng hơn nội dung thì icon "trôi" giữa. Cách fix:
+ *   1. Bản thân `<input>` set `position: relative` để pseudo dùng làm
+ *      anchor.
+ *   2. Picker indicator `position: absolute` ghim right.
+ *   3. Padding-right để text không chui dưới icon.
+ *
+ * Chỉ áp dụng cho date/datetime/time/month/week — không động vào
+ * type=text v.v. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] {
+  position: relative;
+  padding-right: 2.25rem;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0.7;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

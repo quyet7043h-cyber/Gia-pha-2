@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#7A2230" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/app-icon-180.png" />
+
+    <title>Dòng Họ Việt — Gia phả số gìn giữ cội nguồn dòng họ</title>
+    <meta name="description" content="Gia phả số cho dòng họ Việt — dễ dùng cho cả người lớn tuổi. Cả họ cùng dựng cây gia phả, nhớ ngày giỗ âm lịch, lưu giữ giọng kể và di sản của ông bà cho muôn đời sau." />
+    <link rel="canonical" href="https://donghoviet.thaohk.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://donghoviet.thaohk.com/" />
+    <meta property="og:site_name" content="Dòng Họ Việt" />
+    <meta property="og:title" content="Dòng Họ Việt — Gìn giữ cội nguồn dòng họ cho muôn đời sau" />
+    <meta property="og:description" content="Cả họ cùng vun đắp cây gia phả, nhớ ngày giỗ, lưu giữ giọng kể và di sản của ông bà." />
+    <meta property="og:image" content="https://donghoviet.thaohk.com/assets/og-banner.png" />
+    <meta property="og:image:secure_url" content="https://donghoviet.thaohk.com/assets/og-banner.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Dòng Họ Việt — gia phả số cho dòng họ Việt" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://donghoviet.thaohk.com/" />
+    <meta name="twitter:title" content="Dòng Họ Việt — Gìn giữ cội nguồn dòng họ cho muôn đời sau" />
+    <meta name="twitter:description" content="Cả họ cùng vun đắp cây gia phả, nhớ ngày giỗ, lưu giữ giọng kể và di sản của ông bà." />
+    <meta name="twitter:image" content="https://donghoviet.thaohk.com/assets/og-banner.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <script>
+      (function () {
+        try {
+          var v = localStorage.getItem("family-tree:theme");
+          var dark = v === "dark" || ((v === "system" || !v) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", dark ? "#1A1612" : "#7A2230");
+        } catch (e) {}
+      })();
+    </script>
+
+    <style>
+      :root {
+        --bg: 38 60% 96.5%;          /* warm paper */
+        --bg2: 38 50% 93%;           /* tint band */
+        --fg: 20 14% 14%;
+        --card: 0 0% 100%;
+        --primary: 0 45% 33%;        /* oxblood */
+        --primary-fg: 38 60% 97%;
+        --muted: 36 30% 90%;
+        --muted-fg: 25 9% 38%;
+        --accent: 40 64% 40%;        /* bronze */
+        --border: 36 38% 84%;
+        --radius: 1rem;
+      }
+      .dark {
+        --bg: 24 14% 8%;
+        --bg2: 24 14% 11%;
+        --fg: 38 30% 92%;
+        --card: 24 14% 13%;
+        --primary: 0 60% 60%;
+        --primary-fg: 38 30% 95%;
+        --muted: 24 12% 18%;
+        --muted-fg: 35 18% 68%;
+        --accent: 40 65% 62%;
+        --border: 24 10% 22%;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 18px; scroll-behavior: smooth; }
+      @media (max-width: 640px) { html { font-size: 17px; } }
+      body {
+        font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: hsl(var(--bg)); color: hsl(var(--fg));
+        line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+      }
+      h1, h2, h3, .serif { font-family: "Noto Serif", Georgia, serif; line-height: 1.2; letter-spacing: -0.01em; }
+      a { color: inherit; text-decoration: none; }
+      .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 1.4rem; }
+      .ico { width: 1.4em; height: 1.4em; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+      /* Buttons */
+      .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem; min-height: 54px;
+             padding: 0 1.8rem; border-radius: 999px; font-weight: 600; font-size: 1.04rem; cursor: pointer;
+             border: 1.5px solid transparent; transition: transform .14s, filter .14s, background .14s; white-space: nowrap; }
+      .btn .ico { width: 1.2em; height: 1.2em; }
+      .btn:active { transform: scale(.97); }
+      .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-fg)); box-shadow: 0 10px 26px hsl(var(--primary)/.26); }
+      .btn-primary:hover { filter: brightness(1.08); }
+      .btn-ghost { background: hsl(var(--card)); border-color: hsl(var(--border)); color: hsl(var(--fg)); }
+      .btn-ghost:hover { background: hsl(var(--muted)); }
+
+      /* Header */
+      header { position: sticky; top: 0; z-index: 50; background: hsl(var(--bg)/.9);
+               backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid hsl(var(--border)); }
+      .nav { display: flex; align-items: center; justify-content: space-between; height: 70px; gap: 1rem; }
+      .brand { display: flex; align-items: center; gap: .6rem; font-family: "Noto Serif", serif; font-weight: 700; font-size: 1.3rem; white-space: nowrap; }
+      .brand img { width: 38px; height: 38px; border-radius: 10px; }
+      .nav-links { display: none; gap: 1.6rem; margin-left: auto; margin-right: .8rem; font-weight: 500; }
+      .nav-links a { color: hsl(var(--muted-fg)); position: relative; padding: .35rem 0; transition: color .12s; white-space: nowrap; }
+      .nav-links a:hover { color: hsl(var(--primary)); }
+      .nav-links a.active { color: hsl(var(--primary)); }
+      .nav-links a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 2.5px; background: hsl(var(--primary)); border-radius: 2px; }
+      .nav-actions { display: flex; align-items: center; gap: .5rem; }
+      .icon-btn { width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center;
+                  border-radius: 999px; border: 1.5px solid hsl(var(--border)); background: hsl(var(--card)); cursor: pointer; color: hsl(var(--fg)); }
+      .icon-btn:hover { background: hsl(var(--muted)); }
+      .icon-btn .ico { width: 22px; height: 22px; }
+      .menu-btn { display: inline-flex; }
+      .nav-cta { display: none; }
+      /* Nút CTA navbar chỉ hiện khi đã cuộn qua hero (hero đã có CTA riêng) */
+      @media (min-width: 900px) {
+        .nav-links { display: flex; }
+        .menu-btn { display: none; }
+        body.past-hero .nav-cta { display: inline-flex; animation: ctaIn .28s ease; }
+      }
+      @keyframes ctaIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+      .mobile-menu { display: none; flex-direction: column; padding: .4rem 1.4rem 1.3rem; background: hsl(var(--bg)); border-bottom: 1px solid hsl(var(--border)); }
+      .mobile-menu.open { display: flex; }
+      .mobile-menu a:not(.btn) { padding: .95rem .3rem; font-weight: 500; font-size: 1.08rem; border-bottom: 1px solid hsl(var(--border)); }
+      .mobile-menu .btn { width: 100%; margin-top: .7rem; }
+      @media (min-width: 900px) { .mobile-menu { display: none !important; } }
+
+      /* Section scaffolding */
+      section { padding: 5.5rem 0; }
+      @media (max-width: 640px) { section { padding: 3.8rem 0; } }
+      .tint { background: hsl(var(--bg2)); }
+      .eyebrow { display: inline-flex; align-items: center; gap: .5rem; color: hsl(var(--accent)); font-weight: 600;
+                 font-size: .82rem; letter-spacing: .14em; text-transform: uppercase; }
+      .eyebrow .ico { width: 1.05em; height: 1.05em; }
+      .center { text-align: center; }
+      .h-sec { font-size: clamp(1.9rem, 4.6vw, 2.9rem); font-weight: 700; margin-top: .7rem; }
+      .lead { font-size: 1.16rem; color: hsl(var(--muted-fg)); max-width: 640px; margin-top: 1rem; }
+      .center .lead { margin-left: auto; margin-right: auto; }
+
+      /* Reveal on scroll */
+      .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+      .reveal.in { opacity: 1; transform: none; }
+
+      /* Hero */
+      .hero { position: relative; overflow: hidden; padding-top: 4.5rem; }
+      .hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+        background: radial-gradient(60% 50% at 80% 0%, hsl(var(--accent)/.14), transparent 70%),
+                    radial-gradient(55% 45% at 12% 5%, hsl(var(--primary)/.09), transparent 72%); }
+      .hero-grid { display: grid; grid-template-columns: 1fr; gap: 2.8rem; align-items: center; }
+      @media (min-width: 940px) { .hero-grid { grid-template-columns: 1.02fr .98fr; gap: 3.4rem; } }
+      .hero-badge { display: inline-flex; align-items: center; gap: .5rem; padding: .45rem 1rem; background: hsl(var(--card));
+                    border: 1px solid hsl(var(--border)); border-radius: 999px; font-size: .88rem; font-weight: 500; color: hsl(var(--muted-fg)); margin-bottom: 1.4rem; }
+      .hero-badge .ico { width: 1.05em; height: 1.05em; color: hsl(var(--primary)); }
+      .hero h1 { font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 700; }
+      .hero h1 .accent { color: hsl(var(--primary)); }
+      .hero .lead { font-size: 1.24rem; max-width: 540px; }
+      .hero-cta { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .8rem; margin-top: 2rem; max-width: 500px; }
+      .hero-cta .btn { padding: 0 1rem; }
+      @media (max-width: 520px) { .hero-cta { grid-template-columns: 1fr; } .hero-cta .btn { padding: 0 1.6rem; } }
+      .hero-trust { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; margin-top: 1.7rem; color: hsl(var(--muted-fg)); font-size: .96rem; }
+      .hero-trust span { display: inline-flex; align-items: center; gap: .45rem; }
+      .hero-trust .ico { width: 1.2em; height: 1.2em; color: hsl(var(--accent)); }
+      .hero-photo { position: relative; border-radius: calc(var(--radius) * 1.4); overflow: hidden;
+                    box-shadow: 0 30px 70px hsl(var(--fg)/.22); aspect-ratio: 4/5; }
+      @media (max-width: 940px) { .hero-photo { aspect-ratio: 5/4; max-height: 460px; margin-inline: auto; max-width: 520px; } }
+      .hero-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; display: block; }
+
+      /* Steps */
+      .steps { display: grid; grid-template-columns: 1fr; gap: 2.2rem; margin-top: 3.4rem; }
+      @media (min-width: 820px) { .steps { grid-template-columns: repeat(3, 1fr); gap: 2.6rem; } }
+      .step { text-align: center; }
+      .step .n { font-family: "Noto Serif", serif; font-size: 3.4rem; font-weight: 700; color: hsl(var(--primary)); line-height: 1; opacity: .9; }
+      .step h3 { font-size: 1.35rem; font-weight: 600; margin-top: .8rem; }
+      .step p { color: hsl(var(--muted-fg)); margin-top: .5rem; font-size: 1.02rem; }
+      .step .bar { width: 46px; height: 3px; background: hsl(var(--accent)/.5); border-radius: 2px; margin: 1rem auto 0; }
+
+      /* Editorial rows */
+      .row { display: grid; grid-template-columns: 1fr; gap: 2.4rem; align-items: center; }
+      @media (min-width: 900px) { .row { grid-template-columns: 1fr 1fr; gap: 4rem; align-items: stretch; } .row.flip .row-text { order: 2; } .row-text { align-self: center; } }
+      .row + .row { margin-top: 5rem; }
+      @media (max-width: 640px) { .row + .row { margin-top: 3.5rem; } }
+      .row-photo { position: relative; border-radius: calc(var(--radius) * 1.3); overflow: hidden; box-shadow: 0 22px 50px hsl(var(--fg)/.16); aspect-ratio: 4/3; }
+      .row-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      @media (min-width: 900px) { .row-photo { aspect-ratio: auto; min-height: 100%; } }
+      /* Ảnh chụp màn hình app — giữ tỉ lệ thật, không crop */
+      .row-photo.shot { aspect-ratio: auto; border: 1px solid hsl(var(--border)); background: #14110e; }
+      .row-photo.shot img { position: static; width: 100%; height: auto; object-fit: contain; }
+      @media (min-width: 900px) { .row-photo.shot { align-self: center; min-height: 0; } }
+      .row-text h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 700; }
+      .row-text p { color: hsl(var(--muted-fg)); font-size: 1.1rem; margin-top: 1rem; }
+      .row-text .quote { margin-top: 1.4rem; padding-left: 1.1rem; border-left: 3px solid hsl(var(--accent));
+                         font-family: "Noto Serif", serif; font-style: italic; font-size: 1.18rem; color: hsl(var(--fg)); }
+      .row-text .more { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.5rem; color: hsl(var(--primary)); font-weight: 600; }
+      .row-text .more:hover { gap: .8rem; }
+      .audio { margin-top: 1.6rem; display: flex; align-items: center; gap: 1rem; background: hsl(var(--card));
+               border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.1rem 1.3rem; box-shadow: 0 8px 24px hsl(var(--fg)/.06); }
+      .audio .play { width: 50px; height: 50px; border-radius: 50%; background: hsl(var(--primary)); color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+      .audio .play .ico { width: 24px; height: 24px; }
+      .wave { display: flex; align-items: center; gap: 3px; height: 30px; margin-top: .3rem; }
+      .wave span { width: 4px; border-radius: 2px; background: hsl(var(--accent)); opacity: .8; }
+
+      /* Feature band */
+      .feat-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-top: 3.2rem; }
+      @media (min-width: 560px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (min-width: 980px) { .feat-grid { grid-template-columns: repeat(4, 1fr); } }
+      .feat { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.8rem 1.5rem; text-align: center;
+              transition: transform .15s, box-shadow .15s; }
+      .feat:hover { transform: translateY(-4px); box-shadow: 0 16px 34px hsl(var(--fg)/.09); }
+      .feat .ic { width: 72px; height: 72px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
+                  background: hsl(var(--accent)/.14); color: hsl(var(--accent)); margin: 0 auto 1.1rem; }
+      .feat .ic .ico { width: 36px; height: 36px; stroke-width: 1.7; }
+      .feat h3 { font-size: 1.16rem; font-weight: 600; }
+      .feat p { color: hsl(var(--muted-fg)); margin-top: .5rem; font-size: .98rem; }
+
+      /* Trust */
+      .trust-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-top: 3rem; }
+      @media (min-width: 760px) { .trust-grid { grid-template-columns: repeat(3, 1fr); } }
+      .trust { text-align: center; padding: 1rem; }
+      .trust .ic { width: 60px; height: 60px; border-radius: 18px; background: hsl(var(--primary)/.10); color: hsl(var(--primary));
+                   display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+      .trust .ic .ico { width: 30px; height: 30px; }
+      .trust h3 { font-size: 1.15rem; font-weight: 600; }
+      .trust p { color: hsl(var(--muted-fg)); margin-top: .4rem; }
+
+      /* Testimonials */
+      .testi-grid { display: grid; grid-template-columns: 1fr; gap: 1.3rem; margin-top: 3.2rem; }
+      @media (min-width: 720px) { .testi-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (min-width: 1000px) { .testi-grid { grid-template-columns: repeat(3, 1fr); } }
+      .tcard { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.8rem; display: flex; flex-direction: column; }
+      .tcard .mark { font: 700 2.6rem "Noto Serif"; color: hsl(var(--accent)); line-height: .5; height: 1rem; }
+      .tcard .q { font-family: "Noto Serif", serif; font-style: italic; font-size: 1.08rem; line-height: 1.6; flex: 1; }
+      .tcard .who { display: flex; align-items: center; gap: .85rem; margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid hsl(var(--border)); }
+      .tcard .ava { width: 48px; height: 48px; border-radius: 50%; background: hsl(var(--primary)/.12); color: hsl(var(--primary));
+                    display: flex; align-items: center; justify-content: center; font: 700 1.05rem "Noto Serif"; flex: none; }
+      .tcard .who b { font-size: .96rem; } .tcard .who small { display: block; color: hsl(var(--muted-fg)); font-weight: 400; font-size: .83rem; }
+
+      /* FAQ */
+      .faq { margin: 3rem auto 0; }
+      details { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 0 1.4rem; margin-bottom: .9rem; }
+      summary { list-style: none; cursor: pointer; padding: 1.3rem 0; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+      summary::-webkit-details-marker { display: none; }
+      summary .ico { width: 1.3rem; height: 1.3rem; color: hsl(var(--primary)); transition: transform .2s; }
+      details[open] summary .ico { transform: rotate(45deg); }
+      details .ans { padding: 0 0 1.3rem; color: hsl(var(--muted-fg)); }
+
+      /* Final CTA */
+      .cta { position: relative; overflow: hidden; color: #f6efe3; border-radius: calc(var(--radius) * 1.6);
+             background: linear-gradient(135deg, #7a2e2e 0%, #5d2222 60%, #4a1d1d 100%); padding: 4rem 2rem; text-align: center; }
+      .cta::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 80% at 85% 115%, rgba(184,134,42,.30), transparent 70%); }
+      .cta > * { position: relative; }
+      .cta h2 { font-size: clamp(1.8rem, 4.6vw, 2.8rem); }
+      .cta p { margin-top: 1rem; opacity: .92; max-width: 560px; margin-inline: auto; font-size: 1.12rem; }
+      .cta .btns { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; max-width: 540px; margin: 2.2rem auto 0; }
+      @media (max-width: 520px) { .cta .btns { grid-template-columns: 1fr; } }
+      .cta .btn-primary { background: #fbf7f0; color: #7a2e2e; box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+      .cta .btn-line { background: rgba(246,239,227,.08); border-color: rgba(246,239,227,.55); color: #f6efe3; }
+      .cta .dragon { position: absolute; right: -24px; bottom: -34px; width: 200px; opacity: .18; pointer-events: none; }
+
+      /* Footer */
+      footer { border-top: 1px solid hsl(var(--border)); padding: 3.2rem 0 2.6rem; }
+      .foot-top { display: grid; grid-template-columns: 1fr; gap: 1.8rem; }
+      @media (min-width: 720px) { .foot-top { grid-template-columns: 1.8fr 1fr 1fr auto; } }
+      .foot-qr { display: flex; flex-direction: column; align-items: center; gap: .55rem; text-align: center; }
+      .foot-qr img { width: 104px; height: 104px; border-radius: 12px; background: #fff; padding: 7px; box-shadow: 0 4px 14px hsl(var(--fg)/.12); }
+      .foot-qr small { font-size: .8rem; color: hsl(var(--muted-fg)); line-height: 1.4; }
+      .foot-brand p { margin-top: .8rem; color: hsl(var(--muted-fg)); font-size: .96rem; max-width: 320px; }
+      .foot-col h4 { font-size: .82rem; text-transform: uppercase; letter-spacing: .08em; color: hsl(var(--muted-fg)); margin-bottom: .9rem; }
+      .foot-col a { display: flex; align-items: center; gap: .5rem; padding: .32rem 0; }
+      .foot-col a:hover { color: hsl(var(--primary)); }
+      .foot-col .ico { width: 1.05rem; height: 1.05rem; }
+      .foot-bottom { margin-top: 2.6rem; padding-top: 1.6rem; border-top: 1px solid hsl(var(--border)); text-align: center; color: hsl(var(--muted-fg)); font-size: .9rem; }
+
+      @media (hover: none) { html, body { scrollbar-width: none; } *::-webkit-scrollbar { display: none; width: 0; height: 0; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+    </style>
+  </head>
+
+  <body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></symbol>
+      <symbol id="i-invite" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></symbol>
+      <symbol id="i-qr" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><line x1="2" x2="22" y1="2" y2="22"/></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+      <symbol id="i-landmark" viewBox="0 0 24 24"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+      <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></symbol>
+    </svg>
+
+    <header>
+      <div class="wrap nav">
+        <a class="brand" href="/"><img src="/assets/app-icon.svg" alt="Dòng Họ Việt" /><span>Dòng Họ Việt</span></a>
+        <nav class="nav-links">
+          <a href="#cach-dung">Cách dùng</a>
+          <a href="#cau-chuyen">Câu chuyện</a>
+          <a href="#tinh-nang">Tính năng</a>
+          <a href="#an-toan">An toàn</a>
+          <a href="#cau-hoi">Hỏi đáp</a>
+        </nav>
+        <div class="nav-actions">
+          <button class="icon-btn" id="themeToggle" aria-label="Đổi giao diện"><svg class="ico"><use href="#i-moon"/></svg></button>
+          <a class="btn btn-primary nav-cta" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-tree"/></svg>Tạo gia phả</a>
+          <button class="icon-btn menu-btn" id="menuBtn" aria-label="Mở menu" aria-expanded="false"><svg class="ico"><use href="#i-menu"/></svg></button>
+        </div>
+      </div>
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="#cach-dung">Cách dùng</a>
+        <a href="#cau-chuyen">Câu chuyện</a>
+        <a href="#tinh-nang">Tính năng</a>
+        <a href="#an-toan">An toàn</a>
+        <a href="#cau-hoi">Hỏi đáp</a>
+        <a class="btn btn-primary" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-tree"/></svg>Tạo gia phả dòng họ</a>
+        <a class="btn btn-ghost" href="https://www.facebook.com/donghoviet2026" target="_blank" rel="noopener"><svg class="ico"><use href="#i-facebook"/></svg>Nhóm Facebook</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <span class="hero-badge"><svg class="ico"><use href="#i-heart"/></svg>Gia phả số cho dòng họ Việt</span>
+            <h1>Gìn giữ <span class="accent">cội nguồn</span> dòng họ cho muôn đời sau</h1>
+            <p class="lead">Nơi cả họ cùng nhau dựng nên cây gia phả, ghi nhớ công ơn tổ tiên và lưu giữ những câu chuyện của ông bà — để con cháu mai sau biết mình từ đâu mà đến.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-tree"/></svg>Tạo gia phả dòng họ</a>
+              <a class="btn btn-ghost" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-eye"/></svg>Xem dòng họ mẫu</a>
+            </div>
+            <div class="hero-trust">
+              <span><svg class="ico"><use href="#i-heart"/></svg>Miễn phí để bắt đầu</span>
+              <span><svg class="ico"><use href="#i-lock"/></svg>Riêng tư, bạn toàn quyền</span>
+              <span><svg class="ico"><use href="#i-users"/></svg>Dễ cho cả người lớn tuổi</span>
+            </div>
+          </div>
+          <div class="hero-photo reveal">
+            <img src="/assets/hero-family.jpg" alt="Đại gia đình Việt nhiều thế hệ quây quần bên ông bà" loading="eager" />
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="tint" id="cach-dung">
+        <div class="wrap center">
+          <span class="eyebrow"><svg class="ico"><use href="#i-sparkles"/></svg>Đơn giản hơn bạn nghĩ</span>
+          <h2 class="h-sec">Cả họ cùng làm — chỉ ba bước</h2>
+          <p class="lead">Bạn không phải ngồi nhập hàng nghìn người một mình. Khởi tạo, mời cả họ, rồi cây gia phả tự lớn lên.</p>
+        </div>
+        <div class="wrap steps">
+          <div class="step reveal"><div class="n">1</div><h3>Tạo dòng họ</h3><p>Lập dòng họ trong vài phút, thêm cụ tổ và vài đời đầu bạn nhớ. Không cần đầy đủ ngay.</p><div class="bar"></div></div>
+          <div class="step reveal"><div class="n">2</div><h3>Mời cả họ cùng góp</h3><p>Gửi một đường link mời. Mỗi người tự nhận mình và bổ sung nhánh nhà mình.</p><div class="bar"></div></div>
+          <div class="step reveal"><div class="n">3</div><h3>Lưu giữ cho muôn đời</h3><p>Cây nhiều đời dần hoàn chỉnh, được sao lưu an toàn — không lo thất lạc, mai một.</p><div class="bar"></div></div>
+        </div>
+        <div class="wrap center" style="margin-top:3rem">
+          <a class="btn btn-primary reveal" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-arrow"/></svg>Bắt đầu dòng họ của bạn</a>
+        </div>
+      </section>
+
+      <!-- Story / value rows -->
+      <section id="cau-chuyen">
+        <div class="wrap">
+          <div class="row reveal">
+            <div class="row-text">
+              <span class="eyebrow"><svg class="ico"><use href="#i-mic"/></svg>Điều quý giá nhất</span>
+              <h2 class="h-sec">Lưu giữ giọng kể của ông bà</h2>
+              <p>Không chỉ là tên và ngày tháng. Hãy ghi lại chính giọng ông bà kể về gốc gác dòng họ, về tổ tiên, về những năm tháng đã qua — kèm hình ảnh và kỷ vật.</p>
+              <p class="quote">“Để mai này cháu chắt được nghe lại giọng cụ kể chuyện họ mình.”</p>
+              <div class="audio">
+                <div class="play"><svg class="ico"><use href="#i-play"/></svg></div>
+                <div style="flex:1"><div style="font-weight:600">Cụ kể về gốc tích dòng họ</div><div class="wave" id="wave"></div></div>
+              </div>
+            </div>
+            <div class="row-photo"><img src="/assets/family-storytelling.jpg" alt="Ông bà kể chuyện dòng họ cho con cháu nghe" loading="lazy" /></div>
+          </div>
+
+          <div class="row flip reveal">
+            <div class="row-text">
+              <span class="eyebrow"><svg class="ico"><use href="#i-tree"/></svg>Trực quan, sống động</span>
+              <h2 class="h-sec">Cây gia phả nhiều đời, xem trên cả điện thoại</h2>
+              <p>Dựng phả hệ trực quan qua nhiều thế hệ, đặt người làm tâm, xem toàn màn hình, in hoặc xuất sổ gia phả khổ lớn để treo nơi từ đường.</p>
+              <a class="more" href="https://giapha.thaohk.com">Xem dòng họ mẫu <svg class="ico"><use href="#i-arrow"/></svg></a>
+            </div>
+            <div class="row-photo shot"><img src="/assets/app-tree.png" alt="Giao diện cây gia phả nhiều đời trong ứng dụng" loading="lazy" /></div>
+          </div>
+
+          <div class="row reveal">
+            <div class="row-text">
+              <span class="eyebrow"><svg class="ico"><use href="#i-heart"/></svg>Nếp nhà</span>
+              <h2 class="h-sec">Gìn giữ truyền thống &amp; di sản dòng họ</h2>
+              <p>Lưu giai thoại, gia phong, tục lệ, công trạng và kỷ vật của dòng họ; ghi nhớ ngày giỗ, nơi an nghỉ của tổ tiên — để nếp nhà được trao lại cho đời sau.</p>
+              <a class="more" href="https://giapha.thaohk.com">Khám phá tính năng <svg class="ico"><use href="#i-arrow"/></svg></a>
+            </div>
+            <div class="row-photo"><img src="/assets/family-tradition.jpg" alt="Ba thế hệ cùng giữ nếp nhà ngày Tết" loading="lazy" /></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vietnamese-specific features -->
+      <section class="tint" id="tinh-nang">
+        <div class="wrap center">
+          <span class="eyebrow"><svg class="ico"><use href="#i-sparkles"/></svg>Đặc trưng Việt</span>
+          <h2 class="h-sec">Hiểu dòng họ Việt — điều phần mềm ngoại không làm được</h2>
+          <p class="lead">Được làm riêng cho tập tục, lễ nghĩa và cách xưng hô của người Việt.</p>
+        </div>
+        <div class="wrap feat-grid">
+          <div class="feat reveal"><div class="ic"><svg class="ico"><use href="#i-calendar"/></svg></div><h3>Nhớ giỗ theo âm lịch</h3><p>Ghi ngày sinh/mất theo cả âm &amp; dương lịch; tự nhắc ngày giỗ, ngày kỵ — không bao giờ quên.</p></div>
+          <div class="feat reveal"><div class="ic"><svg class="ico"><use href="#i-chat"/></svg></div><h3>Máy tính xưng hô</h3><p>Hai người trong họ gọi nhau là gì — chú, bác, cô, dì, cậu, cháu? Tra ra ngay.</p></div>
+          <div class="feat reveal"><div class="ic"><svg class="ico"><use href="#i-qr"/></svg></div><h3>Mã QR ở mộ &amp; từ đường</h3><p>In QR dán nơi mộ phần hoặc từ đường; con cháu quét là hiện ngay tiểu sử người đã khuất.</p></div>
+          <div class="feat reveal"><div class="ic"><svg class="ico"><use href="#i-link"/></svg></div><h3>Nối lại chi thất lạc</h3><p>Liên kết các nhánh tản mát nhiều đời và kết nối thông gia giữa hai dòng họ.</p></div>
+        </div>
+      </section>
+
+      <!-- Trust -->
+      <section id="an-toan">
+        <div class="wrap center">
+          <span class="eyebrow"><svg class="ico"><use href="#i-shield"/></svg>Yên tâm gửi gắm</span>
+          <h2 class="h-sec">Dữ liệu dòng họ — an toàn và do bạn nắm giữ</h2>
+          <p class="lead">Đây là thông tin người thân. Chúng tôi giữ gìn cẩn trọng như chính dòng họ mình.</p>
+        </div>
+        <div class="wrap trust-grid">
+          <div class="trust reveal"><div class="ic"><svg class="ico"><use href="#i-database"/></svg></div><h3>Sao lưu an toàn</h3><p>Lưu &amp; sao lưu định kỳ trên máy chủ riêng — không lo cháy nhà, mất sổ, hỏng máy.</p></div>
+          <div class="trust reveal"><div class="ic"><svg class="ico"><use href="#i-eyeoff"/></svg></div><h3>Ẩn người còn sống</h3><p>Khi chia sẻ ra ngoài, thông tin người đang sống được tự động ẩn.</p></div>
+          <div class="trust reveal"><div class="ic"><svg class="ico"><use href="#i-shield"/></svg></div><h3>Bạn toàn quyền</h3><p>Bạn quyết định ai được xem, ai được sửa, công khai hay riêng tư.</p></div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="tint">
+        <div class="wrap center">
+          <span class="eyebrow"><svg class="ico"><use href="#i-heart"/></svg>Dòng họ nói gì</span>
+          <h2 class="h-sec">Được các dòng họ tin dùng</h2>
+        </div>
+        <!-- LỜI CHỨNG THỰC — MẪU, thay bằng lời thật trước khi quảng bá -->
+        <div class="wrap testi-grid">
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">Cả họ tôi ở khắp ba miền, vậy mà chỉ sau một tháng đã cùng dựng lại được cây gia phả sáu đời.</p><div class="who"><span class="ava">NP</span><div><b>Ông Nguyễn Văn Phúc</b><small>Trưởng tộc họ Nguyễn · Bắc Ninh</small></div></div></div>
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">Tôi kịp ghi âm giọng bà nội kể chuyện gốc tích dòng họ trước khi bà mất — quý hơn vàng.</p><div class="who"><span class="ava">TL</span><div><b>Bà Trần Thị Lan</b><small>Họ Trần · Nam Định</small></div></div></div>
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">Mấy cụ lớn tuổi cũng tự vào xem và bổ sung được. Chữ to, nút lớn, không hề rối.</p><div class="who"><span class="ava">LH</span><div><b>Ông Lê Quang Hải</b><small>Trưởng họ Lê · Hà Tĩnh</small></div></div></div>
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">Về quê giỗ tổ, lớp trẻ tra ngay được ai vai trên vai dưới, gọi nhau cho đúng.</p><div class="who"><span class="ava">PĐ</span><div><b>Anh Phạm Minh Đức</b><small>Họ Phạm · TP.HCM</small></div></div></div>
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">In được cuốn gia phả và phả đồ khổ lớn treo ở từ đường. Con cháu về ai cũng trầm trồ.</p><div class="who"><span class="ava">VT</span><div><b>Ông Võ Đình Tâm</b><small>Trưởng họ Võ · Quảng Nam</small></div></div></div>
+          <div class="tcard reveal"><div class="mark">“</div><p class="q">Nhờ nhắc giỗ theo âm lịch, con cháu không còn quên ngày kỵ của các cụ.</p><div class="who"><span class="ava">ĐH</span><div><b>Ông Đặng Văn Hoà</b><small>Trưởng họ Đặng · Thái Bình</small></div></div></div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="cau-hoi">
+        <div class="wrap center">
+          <span class="eyebrow"><svg class="ico"><use href="#i-chat"/></svg>Hỏi đáp</span>
+          <h2 class="h-sec">Những điều thường băn khoăn</h2>
+        </div>
+        <div class="wrap faq">
+          <details open><summary>Người lớn tuổi có dùng được không?<svg class="ico"><use href="#i-plus"/></svg></summary><div class="ans">Được. Giao diện chữ to, nút lớn, ít thao tác, tiếng Việt thuần — ưu tiên cho người lớn tuổi. Có cả video hướng dẫn từng bước.</div></details>
+          <details><summary>Dữ liệu có an toàn không?<svg class="ico"><use href="#i-plus"/></svg></summary><div class="ans">Có. Dữ liệu lưu &amp; sao lưu định kỳ trên máy chủ riêng. Thông tin người còn sống được ẩn khi chia sẻ ra ngoài, và bạn toàn quyền quyết định ai xem, ai sửa.</div></details>
+          <details><summary>Nhập nhiều người có cực không?<svg class="ico"><use href="#i-plus"/></svg></summary><div class="ans">Không phải làm một mình. Bạn mời cả họ qua một đường link; mỗi người tự bổ sung nhánh nhà mình.</div></details>
+          <details><summary>Có mất phí không?<svg class="ico"><use href="#i-plus"/></svg></summary><div class="ans">Bạn bắt đầu hoàn toàn miễn phí. Các nhu cầu nâng cao như in sách gia phả, phả đồ khổ lớn có thể có chi phí riêng.</div></details>
+          <details><summary>Cần hỗ trợ thì liên hệ ai?<svg class="ico"><use href="#i-plus"/></svg></summary><div class="ans">Gửi email tới <b>support@thaohk.com</b> hoặc tham gia <b>nhóm Facebook</b> của chúng tôi — sẽ có người hướng dẫn tận tình, kể cả giúp dựng dòng họ đầu tiên.</div></details>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section>
+        <div class="wrap">
+          <div class="cta reveal">
+            <img class="dragon" src="/assets/dragon.svg" alt="" aria-hidden="true" />
+            <h2 class="serif">Bắt đầu gìn giữ dòng họ của bạn hôm nay</h2>
+            <p>Chỉ vài phút để tạo dòng họ và mời cả họ cùng vun đắp. Miễn phí, và bạn luôn được hỗ trợ.</p>
+            <div class="btns">
+              <a class="btn btn-primary" href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-tree"/></svg>Tạo gia phả dòng họ</a>
+              <a class="btn btn-line" href="https://www.facebook.com/donghoviet2026" target="_blank" rel="noopener"><svg class="ico"><use href="#i-facebook"/></svg>Tham gia nhóm Facebook</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="foot-top">
+          <div class="foot-brand">
+            <a class="brand" href="/"><img src="/assets/app-icon.svg" alt="" style="width:32px;height:32px;border-radius:9px"/><span>Dòng Họ Việt</span></a>
+            <p>Gia phả số gìn giữ cội nguồn dòng họ Việt — để con cháu muôn đời sau biết mình từ đâu mà đến.</p>
+          </div>
+          <div class="foot-col">
+            <h4>Khám phá</h4>
+            <a href="#cach-dung">Cách dùng</a>
+            <a href="#tinh-nang">Tính năng</a>
+            <a href="#cau-hoi">Hỏi đáp</a>
+          </div>
+          <div class="foot-col">
+            <h4>Liên hệ &amp; bắt đầu</h4>
+            <a href="https://giapha.thaohk.com"><svg class="ico"><use href="#i-tree"/></svg>Tạo gia phả</a>
+            <a href="mailto:support@thaohk.com"><svg class="ico"><use href="#i-mail"/></svg>support@thaohk.com</a>
+            <a href="https://www.facebook.com/donghoviet2026" target="_blank" rel="noopener"><svg class="ico"><use href="#i-facebook"/></svg>Nhóm Facebook</a>
+          </div>
+          <div class="foot-qr">
+            <img src="/assets/app-qr.png" alt="Mã QR mở ứng dụng Dòng Họ Việt trên điện thoại" width="104" height="104" loading="lazy" />
+            <small>Quét để mở app<br />trên điện thoại</small>
+          </div>
+        </div>
+        <div class="foot-bottom">© <span id="year">2026</span> Dòng Họ Việt · Gìn giữ cội nguồn người Việt</div>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+      (function () { var w = document.getElementById("wave"); if (!w) return;
+        [10,18,26,14,30,22,12,28,16,24,10,20,32,14,22,12,26,18,10,16].forEach(function (h) { var s = document.createElement("span"); s.style.height = h + "px"; w.appendChild(s); }); })();
+
+      var root = document.documentElement, toggle = document.getElementById("themeToggle");
+      function syncIcon() { toggle.querySelector("use").setAttribute("href", root.classList.contains("dark") ? "#i-sun" : "#i-moon"); }
+      // sun/moon symbols
+      (function(){ var s=document.querySelector('svg[aria-hidden="true"]');
+        s.insertAdjacentHTML('beforeend','<symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>'); })();
+      syncIcon();
+      toggle.addEventListener("click", function () {
+        var dark = root.classList.toggle("dark"); root.style.colorScheme = dark ? "dark" : "light";
+        try { localStorage.setItem("family-tree:theme", dark ? "dark" : "light"); } catch (e) {}
+        var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", dark ? "#1A1612" : "#7A2230");
+        syncIcon();
+      });
+
+      // Mobile menu
+      (function () { var btn = document.getElementById("menuBtn"), menu = document.getElementById("mobileMenu"); if (!btn) return;
+        function setOpen(o) { menu.classList.toggle("open", o); btn.setAttribute("aria-expanded", o); btn.querySelector("use").setAttribute("href", o ? "#i-close" : "#i-menu"); }
+        btn.addEventListener("click", function () { setOpen(!menu.classList.contains("open")); });
+        Array.prototype.forEach.call(menu.querySelectorAll("a"), function (a) { a.addEventListener("click", function () { setOpen(false); }); }); })();
+
+      // Scroll reveal
+      (function () {
+        var els = document.querySelectorAll(".reveal");
+        if (!("IntersectionObserver" in window)) { els.forEach(function (e) { e.classList.add("in"); }); return; }
+        var io = new IntersectionObserver(function (en) { en.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { threshold: .12 });
+        els.forEach(function (e) { io.observe(e); });
+      })();
+
+      // Nút CTA navbar hiện khi cuộn qua hero
+      (function () {
+        var hero = document.querySelector(".hero"); if (!hero) return;
+        if (!("IntersectionObserver" in window)) { document.body.classList.add("past-hero"); return; }
+        var io = new IntersectionObserver(function (en) {
+          document.body.classList.toggle("past-hero", !en[0].isIntersecting);
+        }, { rootMargin: "-72px 0px 0px 0px", threshold: 0 });
+        io.observe(hero);
+      })();
+
+      // Scrollspy
+      (function () {
+        var links = Array.prototype.slice.call(document.querySelectorAll('.nav-links a[href^="#"]'));
+        var map = {}; links.forEach(function (a) { var id = a.getAttribute("href").slice(1); if (document.getElementById(id)) map[id] = a; });
+        var ids = Object.keys(map); if (!ids.length) return;
+        function onScroll() { var cur = null; ids.forEach(function (id) { if (document.getElementById(id).getBoundingClientRect().top <= 140) cur = id; });
+          links.forEach(function (a) { a.classList.remove("active"); }); if (cur && map[cur]) map[cur].classList.add("active"); }
+        window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+      })();
+    </script>
+  </body>
+</html>

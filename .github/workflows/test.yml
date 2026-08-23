@@ -1,0 +1,93 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # Pin a specific CLI version. Using `latest` hits the
+          # GitHub releases API per run, and the runner IPs share an
+          # anonymous quota → spurious "rate limit exceeded" failures.
+          # Bump this when local development moves to a newer CLI.
+          version: 2.102.0
+
+      - name: Start Supabase local
+        run: supabase start
+
+      - name: Wait for the stack to settle
+        # Two cold-start hazards we've seen on CI:
+        #   1. Sub-second clock drift between gotrue + PostgREST →
+        #      "JWT issued at future" on the first authenticated request.
+        #   2. The Storage container needs a moment after the API gateway
+        #      starts answering — `supabase db reset` then auto-creates
+        #      the configured bucket via the Storage REST API, and a 502
+        #      from Kong on that call aborts the whole reset.
+        # Poll the Storage health endpoint with a generous total budget
+        # before proceeding.
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:54321/storage/v1/version > /dev/null 2>&1; then
+              echo "Storage ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          sleep 3  # extra grace for the clock + connection pool
+
+      - name: Apply migrations (db reset, retries on 502)
+        # Even with the wait above, the reset's bucket call can intermittently
+        # 502 on slow CI runners. Try up to 3 times before giving up.
+        run: |
+          for attempt in 1 2 3; do
+            if supabase db reset --no-seed; then
+              exit 0
+            fi
+            echo "::warning::db reset attempt ${attempt} failed; retrying"
+            sleep 5
+          done
+          echo "::error::db reset failed after 3 attempts"
+          exit 1
+
+      - name: Generate types & check no drift
+        # Strip Supabase CLI chatter ("Connecting to db…", upgrade
+        # warnings on stdout) so the diff isn't sensitive to which CLI
+        # version the runner happens to ship. The same awk filter
+        # lives in package.json's db:types script.
+        run: |
+          supabase gen types typescript --local 2>/dev/null \
+            | awk '/^export type Json =/{seen=1} seen{print} /^} as const$/{exit}' \
+            > /tmp/db.types.gen.ts
+          diff /tmp/db.types.gen.ts src/lib/database.types.ts \
+            || (echo "::error::database.types.ts is out of sync — run npm run db:types"; exit 1)
+
+      - name: Build (typecheck)
+        run: npm run build
+
+      - name: RLS + integration tests
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          # Legacy JWT keys from supabase start --output env (deterministic for local)
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+        run: npm run test:rls
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop

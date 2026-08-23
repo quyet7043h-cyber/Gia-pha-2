@@ -1,0 +1,120 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { supabase as defaultClient } from "@/lib/supabase";
+import type { Database } from "@/lib/database.types";
+
+type Client = SupabaseClient<Database>;
+
+export interface PersonForTree {
+  id: string;
+  full_name: string;
+  gender: "M" | "F";
+  is_living: boolean;
+  is_root: boolean;
+  birth_date: string | null;
+  birth_date_precision?: "year" | "month" | "day" | null;
+  death_date: string | null;
+  generation: number | null;
+  birth_family_id: string | null;
+  branch_id: string | null;
+  photo_path: string | null;
+  /** Explicit sibling rank ("con thứ mấy"). 1 = oldest, 2 = next, …
+   *  Null when not set — adapter falls back to birth_date sort.
+   *  Optional so legacy callers that build PersonForTree without the
+   *  new column (Share lineage payload, MyLineage adapter, tests)
+   *  still typecheck. */
+  birth_order?: number | null;
+  /** Recurring giỗ (âm lịch) — tháng/ngày, lặp hằng năm. Dùng cho tuỳ
+   *  chọn hiện ngày giỗ người đã mất trên thẻ cây. Optional vì các
+   *  caller cũ (share, MyLineage, tests) không nạp cột này. */
+  death_anniv_lunar_month?: number | null;
+  death_anniv_lunar_day?: number | null;
+  /** Hưởng thọ tự ghi (tuổi). Optional, lý do như trên. */
+  lifespan_years?: number | null;
+}
+
+export interface FamilyForTree {
+  id: string;
+  husband_id: string | null;
+  wife_id: string | null;
+  /** Explicit spouse rank (vợ cả/hai/ba); null = unranked. */
+  spouse_order: number | null;
+  /** Tie-break for spouse ordering when rank is unset. */
+  created_at: string | null;
+}
+
+export interface TreeData {
+  persons: PersonForTree[];
+  families: FamilyForTree[];
+}
+
+/**
+ * Hard ceiling — PostgREST's `max_rows` setting (1000 by default on
+ * Supabase Cloud / local config.toml) silently truncates the result.
+ * Without an explicit `.range()` above that, a 5000-person clan would
+ * load with only 1000 persons and 4000 missing nodes drawn as orphans.
+ * Set a defensive upper bound that comfortably covers plan §5's
+ * 7000-person max with headroom.
+ */
+const TREE_FETCH_MAX = 9999;
+
+export type TreeSource = "persons" | "persons_public_safe";
+
+/**
+ * Fetch every (non-deleted) person + family in a clan in a single round-trip.
+ *
+ * Reasonable up to a few thousand persons (each row is small). For very
+ * large clans we'll add ancestry/progeny filters at the server level later,
+ * but family-chart already prunes via main_id + depth client-side.
+ *
+ * `source` lets non-members of a public clan render the tree: they read
+ * the masked `persons_public_safe` view (living persons' personal data
+ * blanked) plus `families_public_safe`. Members + admins keep using the
+ * raw tables — same shape, no `deleted_at` filter needed (the view
+ * already applies it). Mirrors People page's source-selection pattern.
+ */
+export async function getTreeData(
+  clanId: string,
+  source: TreeSource = "persons",
+  client: Client = defaultClient,
+): Promise<TreeData> {
+  const personCols =
+    "id, full_name, gender, is_living, is_root, birth_date, birth_date_precision, death_date, generation, birth_family_id, branch_id, photo_path, birth_order, death_anniv_lunar_month, death_anniv_lunar_day, lifespan_years";
+  const personsQuery =
+    source === "persons_public_safe"
+      ? client
+          .from("persons_public_safe")
+          .select(personCols)
+          .eq("clan_id", clanId)
+          .range(0, TREE_FETCH_MAX)
+      : client
+          .from("persons")
+          .select(personCols)
+          .eq("clan_id", clanId)
+          .is("deleted_at", null)
+          .range(0, TREE_FETCH_MAX);
+
+  const familiesQuery =
+    source === "persons_public_safe"
+      ? client
+          .from("families_public_safe")
+          .select("id, husband_id, wife_id, spouse_order, created_at")
+          .eq("clan_id", clanId)
+          .range(0, TREE_FETCH_MAX)
+      : client
+          .from("families")
+          .select("id, husband_id, wife_id, spouse_order, created_at")
+          .eq("clan_id", clanId)
+          .is("deleted_at", null)
+          .range(0, TREE_FETCH_MAX);
+
+  const [{ data: persons, error: pErr }, { data: families, error: fErr }] =
+    await Promise.all([personsQuery, familiesQuery]);
+  if (pErr) throw new Error(pErr.message);
+  if (fErr) throw new Error(fErr.message);
+
+  return {
+    persons: (persons ?? []) as PersonForTree[],
+    families: (families ?? []) as FamilyForTree[],
+  };
+}

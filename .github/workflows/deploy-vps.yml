@@ -1,0 +1,137 @@
+# Self-hosted VPS deploy.
+#
+#   1. build-push: builds the Docker image with Vite env baked in,
+#      pushes to Docker Hub under `hkthao/family-tree-v3:<tags>`.
+#   2. deploy: SSH into the VPS, pulls the new image, rotates the
+#      container with the new tag, prunes the old image.
+#
+# Manual-only trigger so a code-only refactor doesn't redeploy
+# the VPS for no reason. Push the workflow_run gate back if you
+# want auto-deploy after tests pass.
+#
+# Required secrets (`gh secret set <name> --body <value>`):
+#   DOCKER_USERNAME       Docker Hub username
+#   DOCKER_TOKEN          Docker Hub access token / PAT
+#   VPS_HOST              VPS IP or hostname
+#   VPS_USER              SSH user (typically root)
+#   VPS_SSH_KEY           PEM-format private key — public counterpart
+#                         is in /root/.ssh/authorized_keys on the VPS.
+#                         Auth used to be VPS_PASSWORD; key auth scales
+#                         better (no MaxAuthTries throttling under load
+#                         from brute-force bots on the same box).
+#   VITE_SUPABASE_URL     Same as netlify build-time env
+#   VITE_SUPABASE_ANON_KEY
+#   VITE_SENTRY_DSN       Optional
+
+name: deploy-vps
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+env:
+  IMAGE: hkthao/family-tree-v3
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    outputs:
+      sha7: ${{ steps.meta.outputs.sha7 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute short SHA
+        id: meta
+        run: echo "sha7=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build + push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          # Tag both `latest` (so docker pull on the VPS picks
+          # up the newest by default) and the short SHA (for
+          # rollbacks: ssh in, `docker run hkthao/...:<sha>`
+          # of the prior build).
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.sha7 }}
+          build-args: |
+            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+            VITE_VAPID_PUBLIC_KEY=${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+            VITE_UMAMI_URL=${{ secrets.VITE_UMAMI_URL }}
+            VITE_UMAMI_WEBSITE_ID=${{ secrets.VITE_UMAMI_WEBSITE_ID }}
+            GITHUB_SHA=${{ github.sha }}
+          # Buildx cache via GH Actions registry for warmer
+          # subsequent builds (mostly the node_modules layer).
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Multi-arch is overkill for a small VPS — stick to
+          # x86_64 unless the box is ARM.
+          platforms: linux/amd64
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # scp docker-compose.yml so the VPS has the latest stack
+      # definition. nginx-site.conf is a one-time install on the
+      # host nginx — not re-copied each deploy.
+      - name: Copy compose file to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy/docker-compose.yml"
+          target: "/opt/gia-pha/"
+          strip_components: 1
+
+      - name: Deploy app container on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_IMAGE: ${{ env.IMAGE }}:${{ needs.build-push.outputs.sha7 }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: APP_IMAGE
+          script: |
+            set -euo pipefail
+            cd /opt/gia-pha
+
+            # Hub login (rate-limit / private pull safe).
+            echo "${{ secrets.DOCKER_TOKEN }}" \
+              | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # docker-compose env file — pins APP_IMAGE to the
+            # SHA tag built this run. Re-runs overwrite with
+            # whatever the latest deploy is.
+            cat > .env <<EOF
+            APP_IMAGE=${APP_IMAGE}
+            EOF
+
+            # Pull the new app image and rotate the container.
+            # docker compose up -d is idempotent — only services
+            # whose image / config changed get recreated.
+            docker compose pull app
+            docker compose up -d --remove-orphans
+
+            # Drop dangling images from older deploys; keep
+            # named tags so rollback by SHA still works.
+            docker image prune -f

@@ -1,0 +1,488 @@
+/**
+ * notify-inlaw: transactional email for cross-clan in-law links.
+ *
+ * Called fire-and-forget after a link's state changes. The endpoint
+ * takes ONLY a `link_id`; the email type is derived from the current
+ * row's status (DB = single source of truth, same pattern as
+ * notify-contribution):
+ *   - status='pending'   AND clan_b_id set → "Có đề nghị mới" to
+ *                          clan B admins (public-discovery flow only;
+ *                          token-mode pendings have clan_b_id NULL
+ *                          and are silently skipped — token URL is
+ *                          shared out-of-band instead).
+ *   - status='confirmed' → "Họ X đã xác nhận liên kết" to clan A admins
+ *   - status='revoked'   → "Liên kết đã thu hồi" to admins of BOTH sides
+ *
+ * Security model identical to notify-contribution: a third party who
+ * calls this can re-trigger an email matching the existing state, but
+ * nothing else (no rows echoed, no state mutated). Acceptable for now.
+ */
+
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// ─── SMTP (gửi mail trực tiếp, thay cho Resend HTTP API) ───────────
+// Dùng chung cấu hình SMTP với GoTrue. Thiếu SMTP_HOST/SMTP_PASS ⇒
+// dry-run: không gửi mail thật.
+const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "";
+const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "465");
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "";
+const MAIL_FROM =
+  Deno.env.get("SMTP_FROM") ??
+  (Deno.env.get("SMTP_SENDER_NAME") && Deno.env.get("SMTP_ADMIN_EMAIL")
+    ? `${Deno.env.get("SMTP_SENDER_NAME")} <${Deno.env.get("SMTP_ADMIN_EMAIL")}>`
+    : "Dòng Họ Việt <noreply@giapha.local>");
+const APP_BASE_URL =
+  Deno.env.get("APP_BASE_URL") ?? "http://localhost:5173";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(body: unknown, init: ResponseInit = {}): Response {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      ...CORS,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
+function esc(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+/**
+ * Strip CR/LF + collapse whitespace for fields that land in an email
+ * header (subject). A clan name like `Họ X\r\nBcc: attacker@evil`
+ * would otherwise reach Resend's API body intact; while Resend's own
+ * parser may or may not flatten it, downstream MTAs / MUAs that
+ * naively split on \r\n would treat the trailing line as a new
+ * header. Stripping here is cheap defense-in-depth.
+ */
+function safeForHeader(s: string): string {
+  return s.replace(/[\r\n\t]+/g, " ").trim();
+}
+
+function emailLayout(opts: {
+  clanName: string;
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}): string {
+  const cta =
+    opts.ctaLabel && opts.ctaHref
+      ? `<p style="margin: 24px 0;">
+           <a href="${esc(opts.ctaHref)}"
+              style="display:inline-block;padding:10px 18px;background:#7A2230;color:#fff;
+                     text-decoration:none;border-radius:6px;font-weight:600;">${esc(opts.ctaLabel)}</a>
+         </p>`
+      : "";
+  return `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1F1A17;
+            background:#FBF7F0;margin:0;padding:24px;">
+    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;
+                padding:24px;border:1px solid #D8CFC2;">
+      <img src="https://giapha.thaohk.com/icons/app-icon-192.png" alt="Dòng Họ Việt" width="48" height="48" style="display:block;margin:0 0 10px;border-radius:10px;" />
+      <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+                color:#6F665F;margin:0 0 4px;">${esc(opts.clanName)}</p>
+      <h1 style="font-size:20px;color:#7A2230;margin:0 0 16px;">${esc(opts.title)}</h1>
+      ${opts.body}
+      ${cta}
+      <hr style="border:none;border-top:1px solid #D8CFC2;margin:24px 0 8px;" />
+      <p style="font-size:11px;color:#6F665F;margin:0;">
+        Email tự động từ ứng dụng Dòng Họ Việt. Không cần trả lời.
+      </p>
+    </div></body></html>`;
+}
+
+function buildPendingEmail(opts: {
+  recipientClanName: string;
+  peerClanName: string;
+  peerPersonName: string;
+  localPersonName: string;
+  note: string | null;
+  link: string;
+}): { subject: string; html: string } {
+  const subject = `[Dòng Họ Việt ${safeForHeader(opts.recipientClanName)}] ${safeForHeader(opts.peerClanName)} đề nghị liên kết thông gia`;
+  const noteBlock = opts.note
+    ? `<div style="border-left:4px solid #B8862A;background:#FBF7F0;padding:10px 14px;margin:14px 0;">
+         <p style="font-size:11px;color:#6F665F;margin:0 0 4px;text-transform:uppercase;letter-spacing:1px;">
+           Ghi chú từ bên đề nghị
+         </p>
+         <p style="margin:0;font-size:14px;">${esc(opts.note)}</p>
+       </div>`
+    : "";
+  const body = `
+    <p>Một dòng họ vừa gửi đề nghị liên kết thông gia tới bạn.</p>
+    <table style="border-collapse:collapse;margin:12px 0;font-size:14px;">
+      <tr><td style="padding:4px 12px 4px 0;color:#6F665F;">Từ dòng họ</td>
+          <td style="padding:4px 0;font-weight:600;">${esc(opts.peerClanName)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#6F665F;">Người bên họ</td>
+          <td style="padding:4px 0;font-weight:600;">${esc(opts.peerPersonName)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#6F665F;">Nối với</td>
+          <td style="padding:4px 0;font-weight:600;">${esc(opts.localPersonName)} (bên bạn)</td></tr>
+    </table>
+    ${noteBlock}
+    <p style="color:#6F665F;font-size:13px;">
+      Mở /inlaws → tab "Đang chờ" để xác nhận hoặc từ chối.
+    </p>`;
+  return {
+    subject,
+    html: emailLayout({
+      clanName: opts.recipientClanName,
+      title: "Có đề nghị liên kết mới",
+      body,
+      ctaLabel: "Xem & quyết định",
+      ctaHref: opts.link,
+    }),
+  };
+}
+
+function buildConfirmedEmail(opts: {
+  recipientClanName: string;
+  peerClanName: string;
+  localPersonName: string;
+  peerPersonName: string;
+  link: string;
+}): { subject: string; html: string } {
+  const subject = `[Dòng Họ Việt ${safeForHeader(opts.recipientClanName)}] ${safeForHeader(opts.peerClanName)} đã xác nhận liên kết thông gia`;
+  const body = `
+    <p>Đề xuất liên kết của bạn với <strong>${esc(opts.peerClanName)}</strong>
+       vừa được admin bên đó xác nhận.</p>
+    <table style="border-collapse:collapse;margin:12px 0;font-size:14px;">
+      <tr><td style="padding:4px 12px 4px 0;color:#6F665F;">Người bên bạn</td>
+          <td style="padding:4px 0;font-weight:600;">${esc(opts.localPersonName)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#6F665F;">Người bên kia</td>
+          <td style="padding:4px 0;font-weight:600;">${esc(opts.peerPersonName)} (${esc(opts.peerClanName)})</td></tr>
+    </table>
+    <p style="color:#6F665F;font-size:13px;">
+      Trang chi tiết người bên bạn giờ có thẻ "Liên kết thông gia" để xem 2 chiều.
+    </p>`;
+  return {
+    subject,
+    html: emailLayout({
+      clanName: opts.recipientClanName,
+      title: "Đã xác nhận liên kết",
+      body,
+      ctaLabel: "Xem danh sách liên kết",
+      ctaHref: opts.link,
+    }),
+  };
+}
+
+function buildRevokedEmail(opts: {
+  recipientClanName: string;
+  peerClanName: string;
+  link: string;
+}): { subject: string; html: string } {
+  const subject = `[Dòng Họ Việt ${safeForHeader(opts.recipientClanName)}] Liên kết với ${safeForHeader(opts.peerClanName)} đã thu hồi`;
+  const body = `
+    <p>Liên kết thông gia giữa <strong>${esc(opts.recipientClanName)}</strong>
+       và <strong>${esc(opts.peerClanName)}</strong> đã được thu hồi.</p>
+    <p style="color:#6F665F;font-size:13px;">
+      Dữ liệu gia phả của mỗi bên không đổi. Có thể đề nghị nối lại
+      bất cứ lúc nào nếu thông tin cập nhật.
+    </p>`;
+  return {
+    subject,
+    html: emailLayout({
+      clanName: opts.recipientClanName,
+      title: "Liên kết đã thu hồi",
+      body,
+      ctaLabel: "Xem danh sách liên kết",
+      ctaHref: opts.link,
+    }),
+  };
+}
+
+interface OutEmail {
+  to: string;
+  subject: string;
+  html: string;
+}
+
+// Mở kết nối SMTP mới cho mỗi email rồi đóng — không giữ trạng thái.
+// Bọc try/catch bên trong nên một lỗi SMTP/DNS lẻ không làm hỏng vòng
+// lặp: mỗi người nhận độc lập, ta trả lỗi theo từng dòng + tiếp tục.
+async function sendMail(
+  to: string,
+  subject: string,
+  html: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!SMTP_HOST || !SMTP_PASS) {
+    return { ok: false, error: "no-smtp (dry-run)" };
+  }
+  const client = new SMTPClient({
+    connection: {
+      hostname: SMTP_HOST,
+      port: SMTP_PORT,
+      tls: SMTP_PORT === 465, // 465 = TLS ngầm; 587 = STARTTLS
+      auth: { username: SMTP_USER, password: SMTP_PASS },
+    },
+  });
+  try {
+    await client.send({ from: MAIL_FROM, to, subject, html, content: "auto" });
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: `smtp: ${e instanceof Error ? e.message : String(e)}`,
+    };
+  } finally {
+    try {
+      await client.close();
+    } catch {
+      /* đóng lỗi thì bỏ qua */
+    }
+  }
+}
+
+async function sendOne(email: OutEmail): Promise<{ ok: boolean; error?: string }> {
+  return await sendMail(email.to, email.subject, email.html);
+}
+
+interface AdminContact {
+  user_id: string;
+  email: string;
+}
+
+async function adminContactsForClan(
+  sb: ReturnType<typeof createClient>,
+  clanId: string,
+): Promise<AdminContact[]> {
+  const { data: admins } = await sb
+    .from("clan_members")
+    .select("user_id")
+    .eq("clan_id", clanId)
+    .eq("role", "admin");
+  const ids = (admins ?? []).map((a: { user_id: string }) => a.user_id);
+  const out: AdminContact[] = [];
+  for (const id of ids) {
+    const { data: u } = await sb.auth.admin.getUserById(id);
+    if (u?.user?.email) out.push({ user_id: id, email: u.user.email });
+  }
+  return out;
+}
+
+/**
+ * Send the template to every recipient, gated by `notification_log`
+ * dedupe. The UNIQUE (user_id, event_key, channel) constraint on
+ * notification_log is the rate-limit primitive: we INSERT optimistically
+ * with status='sent' BEFORE sending — if the row already exists the
+ * insert fails on the constraint and we skip the network call. After
+ * a failed Resend response, we UPDATE the row to status='failed' so
+ * the admin can clear it later (via /admin Hệ thống tab) to retry.
+ *
+ * Without this gate, an anon caller could replay {link_id} to fan out
+ * unlimited emails to clan admins. With it, each (user, event_key)
+ * pair gets at most one email regardless of how many POSTs hit the
+ * function.
+ */
+async function deliverWithDedupe(
+  sb: ReturnType<typeof createClient>,
+  recipients: AdminContact[],
+  clanIdForLog: string,
+  eventKey: string,
+  tpl: { subject: string; html: string },
+  sent: Array<{ to: string; ok: boolean; error?: string }>,
+): Promise<void> {
+  for (const r of recipients) {
+    // Reserve dedupe slot first. If this fails (UNIQUE collision),
+    // an earlier call already handled this recipient/event combo.
+    const { error: reserveErr } = await sb.from("notification_log").insert({
+      clan_id: clanIdForLog,
+      user_id: r.user_id,
+      event_key: eventKey,
+      channel: "email",
+      status: "sent",
+    });
+    if (reserveErr) {
+      sent.push({ to: r.email, ok: false, error: "deduped" });
+      continue;
+    }
+    const result = await sendOne({
+      to: r.email,
+      subject: tpl.subject,
+      html: tpl.html,
+    });
+    if (!result.ok) {
+      // Downgrade the row so the admin retry UI picks it up.
+      await sb
+        .from("notification_log")
+        .update({ status: "failed" })
+        .eq("user_id", r.user_id)
+        .eq("event_key", eventKey)
+        .eq("channel", "email");
+    }
+    sent.push({ to: r.email, ...result });
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  if (req.method !== "POST")
+    return json({ error: "Method not allowed" }, { status: 405 });
+
+  let body: { link_id?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Invalid body" }, { status: 400 });
+  }
+  if (!body.link_id) {
+    return json({ error: "link_id required" }, { status: 400 });
+  }
+
+  const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: l, error: lErr } = await sb
+    .from("person_links")
+    .select(
+      "id, status, clan_a_id, clan_b_id, person_a_id, person_b_id, note",
+    )
+    .eq("id", body.link_id)
+    .maybeSingle();
+  if (lErr) return json({ error: lErr.message }, { status: 500 });
+  if (!l) return json({ error: "Not found" }, { status: 404 });
+
+  // Fetch both clan + person names in parallel — needed across branches.
+  const [{ data: cA }, { data: cB }, { data: pA }, { data: pB }] =
+    await Promise.all([
+      sb.from("clans").select("name").eq("id", l.clan_a_id).maybeSingle(),
+      l.clan_b_id
+        ? sb.from("clans").select("name").eq("id", l.clan_b_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      sb
+        .from("persons")
+        .select("full_name")
+        .eq("id", l.person_a_id)
+        .maybeSingle(),
+      l.person_b_id
+        ? sb
+            .from("persons")
+            .select("full_name")
+            .eq("id", l.person_b_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+  const clanAName = (cA?.name as string) ?? "Dòng Họ Việt";
+  const clanBName = (cB?.name as string) ?? "Dòng Họ Việt";
+  const personAName = (pA?.full_name as string) ?? "—";
+  const personBName = (pB?.full_name as string) ?? "—";
+
+  const sent: Array<{ to: string; ok: boolean; error?: string }> = [];
+
+  if (l.status === "pending") {
+    // Public-discovery only — token-mode pendings have clan_b_id null
+    // and the URL is shared out-of-band.
+    if (!l.clan_b_id) {
+      return json({ ok: true, skipped: "pending-token-mode" });
+    }
+    const bContacts = await adminContactsForClan(sb, l.clan_b_id);
+    if (bContacts.length === 0) {
+      return json({ ok: true, skipped: "no-admin-emails-b" });
+    }
+    const tpl = buildPendingEmail({
+      recipientClanName: clanBName,
+      peerClanName: clanAName,
+      peerPersonName: personAName,
+      localPersonName: personBName,
+      note: l.note ?? null,
+      link: `${APP_BASE_URL}/clans/${l.clan_b_id}/inlaws`,
+    });
+    await deliverWithDedupe(
+      sb,
+      bContacts,
+      l.clan_b_id,
+      `inlaw:${l.id}:pending`,
+      tpl,
+      sent,
+    );
+  } else if (l.status === "confirmed") {
+    // Email clan A admins — they proposed and have been waiting.
+    const aContacts = await adminContactsForClan(sb, l.clan_a_id);
+    if (aContacts.length === 0) {
+      return json({ ok: true, skipped: "no-admin-emails-a" });
+    }
+    const tpl = buildConfirmedEmail({
+      recipientClanName: clanAName,
+      peerClanName: clanBName,
+      localPersonName: personAName,
+      peerPersonName: personBName,
+      link: `${APP_BASE_URL}/clans/${l.clan_a_id}/inlaws`,
+    });
+    await deliverWithDedupe(
+      sb,
+      aContacts,
+      l.clan_a_id,
+      `inlaw:${l.id}:confirmed`,
+      tpl,
+      sent,
+    );
+  } else if (l.status === "revoked") {
+    // Token-mode revoke (admin A cancels a pending invite before any
+    // clan B accepted) has clan_b_id null — nobody else even knew
+    // the invite existed, so there's nothing to "notify B" about.
+    // Skip silently to avoid rendering a "Liên kết với Dòng Họ Việt đã
+    // thu hồi" email with the default fallback clan name.
+    if (!l.clan_b_id) {
+      return json({ ok: true, skipped: "revoked-token-mode-no-peer" });
+    }
+    // Email admins of BOTH sides — schema doesn't track who revoked,
+    // so we err on the side of transparency over avoiding duplicates.
+    // (The revoker also gets the email, useful as confirmation.)
+    const [aContacts, bContacts] = await Promise.all([
+      adminContactsForClan(sb, l.clan_a_id),
+      adminContactsForClan(sb, l.clan_b_id),
+    ]);
+    const tplA = buildRevokedEmail({
+      recipientClanName: clanAName,
+      peerClanName: clanBName,
+      link: `${APP_BASE_URL}/clans/${l.clan_a_id}/inlaws`,
+    });
+    await deliverWithDedupe(
+      sb,
+      aContacts,
+      l.clan_a_id,
+      `inlaw:${l.id}:revoked`,
+      tplA,
+      sent,
+    );
+    const tplB = buildRevokedEmail({
+      recipientClanName: clanBName,
+      peerClanName: clanAName,
+      link: `${APP_BASE_URL}/clans/${l.clan_b_id}/inlaws`,
+    });
+    await deliverWithDedupe(
+      sb,
+      bContacts,
+      l.clan_b_id,
+      `inlaw:${l.id}:revoked`,
+      tplB,
+      sent,
+    );
+    if (sent.length === 0) {
+      return json({ ok: true, skipped: "no-admin-emails" });
+    }
+  } else {
+    return json({ ok: true, skipped: `unknown-status:${l.status}` });
+  }
+
+  return json({ ok: true, sent });
+});

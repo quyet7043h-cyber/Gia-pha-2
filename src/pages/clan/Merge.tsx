@@ -1,0 +1,514 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { PageHeader } from "@/components/PageHeader";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
+import { IconCheck, IconCopy, IconSearch, IconX } from "@/components/icons";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditClan, useClanContext } from "@/hooks/useClanContext";
+import { invalidateClanData } from "@/lib/cache";
+import {
+  findDuplicateCandidates,
+  type DuplicateCandidate,
+} from "@/lib/duplicateFinder";
+import { queryKeys } from "@/lib/queries/keys";
+import { mergePersons } from "@/lib/queries/merge";
+import { getPerson, listPersons, type PersonDetail } from "@/lib/queries/persons";
+import { getTreeData } from "@/lib/queries/tree";
+
+export default function Merge() {
+  const { clan } = useClanContext();
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const confirm = useConfirm();
+  const toast = useToast();
+
+  const [winnerId, setWinnerId] = useState<string | null>(null);
+  const [loserId, setLoserId] = useState<string | null>(null);
+
+  // Auto-detect duplicate candidates from the existing tree-data query.
+  const { data: tree } = useQuery({
+    queryKey: queryKeys.treeData(clan.id, userId),
+    queryFn: () => getTreeData(clan.id),
+    enabled: !!userId,
+  });
+  const candidates: DuplicateCandidate[] = tree
+    ? findDuplicateCandidates(
+        tree.persons.map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          gender: p.gender,
+          birth_date: p.birth_date,
+          is_living: p.is_living,
+          generation: p.generation,
+        })),
+      )
+    : [];
+
+  const { data: winner } = useQuery({
+    queryKey: queryKeys.person(winnerId ?? "", userId),
+    queryFn: () => getPerson(winnerId!),
+    enabled: !!winnerId,
+  });
+  const { data: loser } = useQuery({
+    queryKey: queryKeys.person(loserId ?? "", userId),
+    queryFn: () => getPerson(loserId!),
+    enabled: !!loserId,
+  });
+
+  const m = useMutation({
+    mutationFn: () => mergePersons(winnerId!, loserId!),
+    onSuccess: async (res) => {
+      await invalidateClanData(qc, clan.id);
+      toast.success("Đã gộp xong", {
+        description: `Đã cập nhật ${res.familiesUpdated} gia đình, ${res.subsUpdated} đăng ký, ${res.eventsUpdated} sự kiện.`,
+      });
+      navigate(`/clans/${clan.id}/people/${winnerId}`);
+    },
+    onError: (e) =>
+      toast.error("Không gộp được", { description: (e as Error).message }),
+  });
+
+  if (!canEditClan(clan)) {
+    return <Navigate to={`/clans/${clan.id}/people`} replace />;
+  }
+
+  return (
+    <div className="space-y-3">
+      <Breadcrumb
+        items={[
+          { label: clan.name, to: `/clans/${clan.id}` },
+          { label: "Gộp người trùng" },
+        ]}
+      />
+      <PageHeader
+        icon={<IconCopy className="h-7 w-7" />}
+        title="Gộp người trùng"
+        description={
+          <>
+            Chọn người <strong>giữ lại</strong> bên trái và{" "}
+            <strong>gộp vào</strong> bên phải. Mọi quan hệ trỏ về người
+            giữ lại; người còn lại xoá mềm (khôi phục từ nhật ký).
+          </>
+        }
+      />
+
+      {candidates.length > 0 && (
+        <SuggestionPanel
+          candidates={candidates}
+          genOffset={clan.generation_offset}
+          onPick={(winner, loser) => {
+            setWinnerId(winner);
+            setLoserId(loser);
+          }}
+        />
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PersonPicker
+          clanId={clan.id}
+          genOffset={clan.generation_offset}
+          title="Giữ lại"
+          person={winner ?? null}
+          selectedId={winnerId}
+          onSelect={setWinnerId}
+          onClear={() => setWinnerId(null)}
+          excludeId={loserId}
+        />
+        <PersonPicker
+          clanId={clan.id}
+          genOffset={clan.generation_offset}
+          title="Gộp vào"
+          person={loser ?? null}
+          selectedId={loserId}
+          onSelect={setLoserId}
+          onClear={() => setLoserId(null)}
+          excludeId={winnerId}
+        />
+      </div>
+
+      {winner && loser && <Comparison winner={winner} loser={loser} />}
+
+      {m.error && (
+        <Alert variant="destructive">
+          <AlertDescription>{(m.error as Error).message}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex gap-3">
+        <Button
+          className="flex-1 sm:flex-none"
+          disabled={!winnerId || !loserId || m.isPending}
+          onClick={async () => {
+            const ok = await confirm({
+              title: `Gộp "${loser?.full_name}" vào "${winner?.full_name}"?`,
+              description:
+                "Quan hệ và trường còn trống của người giữ lại sẽ lấy từ người gộp vào. Người gộp vào sẽ bị xoá mềm — có thể khôi phục từ nhật ký.",
+              confirmLabel: "Gộp",
+            });
+            if (ok) m.mutate();
+          }}
+        >
+          <IconCheck className="h-4 w-4 mr-1.5" />
+          {m.isPending ? "Đang gộp…" : "Gộp"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Suggestion panel ─────────────────────────────────────────────
+
+function SuggestionPanel({
+  candidates,
+  genOffset,
+  onPick,
+}: {
+  candidates: DuplicateCandidate[];
+  genOffset: number;
+  onPick: (winnerId: string, loserId: string) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? candidates : candidates.slice(0, 5);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Đề xuất gộp</CardTitle>
+        <CardDescription>
+          Tìm thấy {candidates.length} cặp có thể trùng (theo tên + giới
+          tính + năm sinh). Chọn người sống / có nhiều dữ liệu hơn làm
+          "giữ lại".
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {visible.map((c, i) => {
+          const kindMeta =
+            c.kind === "exact"
+              ? {
+                  label: "Trùng tên + năm sinh",
+                  classes: "bg-primary/15 text-primary",
+                }
+              : c.kind === "name"
+                ? { label: "Trùng tên", classes: "bg-accent/20 text-accent" }
+                : {
+                    label: "Tên gần giống",
+                    classes: "bg-muted text-muted-foreground",
+                  };
+          return (
+            <div
+              key={i}
+              className="rounded-lg bg-muted/30 p-3 space-y-3"
+            >
+              <span
+                className={`inline-block text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full ${kindMeta.classes}`}
+              >
+                {kindMeta.label}
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <PersonChip person={c.a} genOffset={genOffset} />
+                <PersonChip person={c.b} genOffset={genOffset} />
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onPick(c.a.id, c.b.id)}
+                  className="w-full sm:w-auto"
+                >
+                  Dùng cặp này →
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+        {candidates.length > 5 && !showAll && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll(true)}
+          >
+            Xem thêm {candidates.length - 5} cặp
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function personMeta(
+  p: DuplicateCandidate["a"],
+  genOffset: number,
+): string {
+  const parts: string[] = [];
+  if (p.birth_date) parts.push(`sinh ${p.birth_date.slice(0, 4)}`);
+  if (p.generation !== null)
+    parts.push(`Đời ${p.generation - genOffset}`);
+  if (!p.is_living) parts.push("đã mất");
+  return parts.length > 0 ? `· ${parts.join(" · ")}` : "";
+}
+
+function PersonChip({
+  person,
+  genOffset,
+}: {
+  person: DuplicateCandidate["a"];
+  genOffset: number;
+}) {
+  const meta = personMeta(person, genOffset).replace(/^·\s*/, "");
+  return (
+    <div className="rounded-md bg-card border px-3 py-2 min-w-0">
+      <p className="font-medium truncate">{person.full_name}</p>
+      {meta && (
+        <p className="text-xs text-muted-foreground truncate mt-0.5">
+          {meta}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Person picker (search + result list) ─────────────────────────
+
+function PersonPicker({
+  clanId,
+  genOffset,
+  title,
+  person,
+  selectedId,
+  onSelect,
+  onClear,
+  excludeId,
+}: {
+  clanId: string;
+  genOffset: number;
+  title: string;
+  person: PersonDetail | null;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onClear: () => void;
+  excludeId?: string | null;
+}) {
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+
+  useEffect(() => {
+    const h = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(h);
+  }, [query]);
+
+  const { data } = useQuery({
+    queryKey: ["merge-search", clanId, debounced],
+    queryFn: () =>
+      listPersons(clanId, {
+        page: 1,
+        pageSize: 10,
+        search: debounced,
+        sort: "name",
+      }),
+    enabled: debounced.length >= 2 && !selectedId,
+    staleTime: 30 * 1000,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          {person
+            ? "Bấm × để chọn lại."
+            : "Gõ ít nhất 2 ký tự để tìm theo tên."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {person ? (
+          <div className="flex items-start justify-between gap-3 rounded-md border bg-card p-3">
+            <div className="min-w-0">
+              <p className="font-medium truncate">{person.full_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {person.gender === "M" ? "Nam" : "Nữ"}
+                {person.birth_date ? ` · sinh ${person.birth_date.slice(0, 4)}` : ""}
+                {person.generation !== null
+                  ? ` · Đời ${person.generation - genOffset}`
+                  : ""}
+                {!person.is_living ? " · đã mất" : ""}
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={onClear}>
+              <IconX className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                data-testid={`merge-picker-${title === "Giữ lại" ? "winner" : "loser"}-input`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tên người…"
+                className="pl-9"
+              />
+            </div>
+            {data && data.rows.length > 0 && (
+              <ul className="divide-y rounded-md border bg-card max-h-72 overflow-y-auto">
+                {data.rows
+                  .filter((p) => p.id !== excludeId)
+                  .map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(p.id)}
+                        className="w-full text-left px-3 py-2 hover:bg-muted/40"
+                      >
+                        <p className="font-medium truncate">{p.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.gender === "M" ? "Nam" : "Nữ"}
+                          {p.birth_date ? ` · sinh ${p.birth_date.slice(0, 4)}` : ""}
+                          {p.generation !== null
+                            ? ` · Đời ${p.generation - genOffset}`
+                            : ""}
+                          {!p.is_living ? " · đã mất" : ""}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+            {debounced.length >= 2 && data && data.rows.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Không tìm thấy ai khớp.
+              </p>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Comparison panel ──────────────────────────────────────────────
+
+function Comparison({
+  winner,
+  loser,
+}: {
+  winner: PersonDetail;
+  loser: PersonDetail;
+}) {
+  const rows: { label: string; w: string | null; l: string | null }[] = [
+    { label: "Họ và tên", w: winner.full_name, l: loser.full_name },
+    {
+      label: "Giới tính",
+      w: winner.gender === "M" ? "Nam" : "Nữ",
+      l: loser.gender === "M" ? "Nam" : "Nữ",
+    },
+    {
+      label: "Ngày sinh",
+      w: winner.birth_date,
+      l: loser.birth_date,
+    },
+    {
+      label: "Ngày mất",
+      w: winner.death_date,
+      l: loser.death_date,
+    },
+    { label: "Tên tự", w: winner.courtesy_name, l: loser.courtesy_name },
+    { label: "Tên húy", w: winner.nickname, l: loser.nickname },
+    { label: "Tên thụy", w: winner.posthumous_name, l: loser.posthumous_name },
+    { label: "Nơi sinh", w: winner.birth_place, l: loser.birth_place },
+    { label: "Nơi an táng", w: winner.burial_place, l: loser.burial_place },
+    { label: "Tiểu sử", w: winner.bio, l: loser.bio },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>So sánh dữ liệu</CardTitle>
+        <CardDescription>
+          Mỗi trường còn trống bên trái sẽ được lấp từ bên phải. Trường có
+          giá trị ở cả hai bên thì giữ giá trị bên trái — chỉnh sửa sau khi
+          gộp nếu cần.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="py-2 pr-3 font-medium text-muted-foreground">
+                  Trường
+                </th>
+                <th className="py-2 pr-3 font-medium">Giữ lại</th>
+                <th className="py-2 font-medium">Gộp vào</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const conflict =
+                  !!r.w && !!r.l && r.w !== r.l && r.label !== "Họ và tên";
+                const willFill = !r.w && !!r.l;
+                return (
+                  <tr key={r.label} className="border-b last:border-b-0">
+                    <td className="py-2 pr-3 text-muted-foreground">
+                      {r.label}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {r.w || (
+                        <span className="text-muted-foreground italic">
+                          (trống)
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      className={`py-2 ${
+                        conflict
+                          ? "text-destructive"
+                          : willFill
+                            ? "text-primary"
+                            : ""
+                      }`}
+                    >
+                      {r.l || (
+                        <span className="text-muted-foreground italic">
+                          (trống)
+                        </span>
+                      )}
+                      {willFill && (
+                        <span className="ml-2 text-xs text-primary">
+                          → sẽ lấp
+                        </span>
+                      )}
+                      {conflict && (
+                        <span className="ml-2 text-xs text-destructive">
+                          ≠ xung đột
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
