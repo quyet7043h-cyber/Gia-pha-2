@@ -122,3 +122,25 @@ export async function setMemberSelfVerified(
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
 }
+export async function joinClanByShareToken(
+  token: string,
+  client: Client = defaultClient,
+): Promise<{
+  ok: boolean;
+  status?: "joined" | "already_member";
+  clan_id?: string;
+}> {
+  const { data, error } = await client.rpc("join_clan_by_share_token", {
+    p_token: token,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as {
+    ok: boolean;
+    status?: "joined" | "already_member";
+    clan_id?: string;
+  };
+}
