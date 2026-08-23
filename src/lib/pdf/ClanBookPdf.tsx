@@ -404,7 +404,7 @@ export function ClanBookPdf({ clan, data, include, photoByPersonId, coverByItemI
   const showHonor = include?.honor ?? true;
 
   const HERITAGE_CAT_LABEL: Record<string, string> = {
-    place: "Từ đường / đền / chùa",
+    place: "Từ đường / đền / nhà thờ",
     custom: "Tục lệ / gia phong",
     story: "Giai thoại / công trạng",
     artifact: "Tư liệu / kỷ vật",
@@ -412,7 +412,7 @@ export function ClanBookPdf({ clan, data, include, photoByPersonId, coverByItemI
 
   const RP_KIND_LABEL: Record<string, string> = {
     grave: "Mộ / chôn cất",
-    ashes_temple: "Gửi tro cốt ở chùa",
+    ashes_temple: "Gửi tro cốt ở nhà thờ",
     columbarium: "Nhà lưu tro / tháp cốt",
     scattered: "Rải tro",
     other: "Khác",
@@ -726,40 +726,91 @@ export function ClanBookPdf({ clan, data, include, photoByPersonId, coverByItemI
           <Text style={styles.h1}>Dâu / rể kết hôn vào họ</Text>
           <View style={styles.h1Underline} />
           <Text style={styles.intro}>
-            Người ngoài huyết thống. Không gắn số đời, sắp theo bảng
-            chữ cái. Ghi kèm vợ/chồng trong họ để tra ngược.
+            Người ngoài huyết thống. Không gắn số đời, sắp theo đời và
+  thứ tự của vợ/chồng trong họ để tra ngược.
           </Text>
           {chunk(
   [...inLaws].sort((a, b) => {
-    // Dâu/rể vẫn là nhóm riêng, nhưng thứ tự dựa theo
-    // thế hệ của người huyết thống mà họ kết hôn vào họ.
-    //
-    // Nếu không xác định được người phối ngẫu huyết thống,
-    // đưa xuống cuối và dùng tên làm thứ tự phụ.
+    /*
+     * Dâu/rể vẫn là nhóm riêng.
+     *
+     * Thứ tự:
+     *   1. Theo ĐỜI của người huyết thống mà họ kết hôn.
+     *   2. Nếu cùng đời → theo đúng VỊ TRÍ của người huyết thống
+     *      trong bloodlineSorted.
+     *   3. Nếu không tìm được người huyết thống → đưa xuống cuối.
+     *   4. Chỉ khi hoàn toàn cùng vị trí mới dùng tên làm thứ tự phụ.
+     */
 
-    const getInLawGeneration = (person: typeof a): number => {
+    const getInLawSortKey = (person: typeof a) => {
       const spouseIds = spousesByPerson.get(person.id) ?? [];
 
-      const spouseGenerations = spouseIds
-        .map((spouseId) => personById.get(spouseId)?.generation)
-        .filter((g): g is number => g != null);
+      /*
+       * Tìm những người phối ngẫu có mặt trong danh sách huyết thống.
+       *
+       * bloodlineSorted chính là thứ tự mà phần "Huyết thống"
+       * đang sử dụng để xuất PDF.
+       */
+      const spousesInBloodline = spouseIds
+        .map((spouseId) => {
+          const spouse = personById.get(spouseId);
+          if (!spouse) return null;
 
-      if (spouseGenerations.length === 0) {
-        return Number.MAX_SAFE_INTEGER;
+          const position = bloodlineSorted.findIndex(
+            (p) => p.id === spouse.id,
+          );
+
+          if (position < 0) return null;
+
+          return {
+            spouse,
+            position,
+          };
+        })
+        .filter(
+          (
+            item,
+          ): item is {
+            spouse: (typeof bloodlineSorted)[number];
+            position: number;
+          } => item !== null,
+        );
+
+      /*
+       * Một người có thể có nhiều quan hệ hôn nhân.
+       * Lấy người huyết thống xuất hiện trước nhất trong sổ.
+       */
+      if (spousesInBloodline.length === 0) {
+        return {
+          generation: Number.MAX_SAFE_INTEGER,
+          position: Number.MAX_SAFE_INTEGER,
+        };
       }
 
-      return Math.min(...spouseGenerations);
+      const first = spousesInBloodline.reduce((best, current) =>
+        current.position < best.position ? current : best,
+      );
+
+      return {
+        generation: first.spouse.generation ?? Number.MAX_SAFE_INTEGER,
+        position: first.position,
+      };
     };
 
-    const genA = getInLawGeneration(a);
-    const genB = getInLawGeneration(b);
+    const keyA = getInLawSortKey(a);
+    const keyB = getInLawSortKey(b);
 
-    // 1. Ưu tiên đời
-    if (genA !== genB) {
-      return genA - genB;
+    // 1. Theo đời của người huyết thống.
+    if (keyA.generation !== keyB.generation) {
+      return keyA.generation - keyB.generation;
     }
 
-    // 2. Cùng đời → giữ thứ tự ổn định theo tên
+    // 2. Cùng đời → đúng vị trí của người huyết thống.
+    if (keyA.position !== keyB.position) {
+      return keyA.position - keyB.position;
+    }
+
+    // 3. Chỉ dùng tên để ổn định thứ tự nếu hoàn toàn cùng vị trí.
     return a.full_name.localeCompare(b.full_name, "vi");
   }),
   3,
