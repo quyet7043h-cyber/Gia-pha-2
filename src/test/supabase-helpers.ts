@@ -127,7 +127,14 @@ async function signInWithClockSkewRetry(
 /** Create a clan owned by `owner` (must be signed in). */
 export async function createTestClan(
   owner: TestUser,
-  opts?: { name?: string; visibility?: "private" | "public"; maxPersons?: number; maxUsers?: number },
+  opts?: {
+    name?: string;
+    visibility?: "private" | "public";
+    maxPersons?: number;
+    maxUsers?: number;
+    maxAdmins?: number;
+    maxEditors?: number;
+  },
 ): Promise<string> {
   const { data, error } = await owner.client
     .from("clans")
@@ -143,13 +150,20 @@ export async function createTestClan(
   // Trigger auto_add_owner_as_admin already adds the owner as 'admin' member.
 
   // Apply custom limits via admin (RLS would block clan admin from changing these)
-  if (opts?.maxPersons !== undefined || opts?.maxUsers !== undefined) {
+  if (
+    opts?.maxPersons !== undefined ||
+    opts?.maxUsers !== undefined ||
+    opts?.maxAdmins !== undefined ||
+    opts?.maxEditors !== undefined
+  ) {
     const admin = adminClient();
     const { error: limitErr } = await admin
       .from("clans")
       .update({
         max_persons: opts.maxPersons,
         max_users: opts.maxUsers,
+        max_admins: opts.maxAdmins,
+        max_editors: opts.maxEditors,
       })
       .eq("id", data.id);
     if (limitErr) throw new Error(`clan limits update failed: ${limitErr.message}`);
