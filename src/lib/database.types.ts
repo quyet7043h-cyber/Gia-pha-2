@@ -608,6 +608,8 @@ export type Database = {
           hide_living_for_nonmembers: boolean
           hide_photos_in_share: boolean
           id: string
+          max_admins: number
+          max_editors: number
           max_memory_rooms: number
           max_persons: number
           max_users: number
@@ -633,6 +635,8 @@ export type Database = {
           hide_living_for_nonmembers?: boolean
           hide_photos_in_share?: boolean
           id?: string
+          max_admins?: number
+          max_editors?: number
           max_memory_rooms?: number
           max_persons?: number
           max_users?: number
@@ -658,6 +662,8 @@ export type Database = {
           hide_living_for_nonmembers?: boolean
           hide_photos_in_share?: boolean
           id?: string
+          max_admins?: number
+          max_editors?: number
           max_memory_rooms?: number
           max_persons?: number
           max_users?: number
@@ -3176,3 +3182,4 @@ export const Constants = {
     },
   },
 } as const
+
