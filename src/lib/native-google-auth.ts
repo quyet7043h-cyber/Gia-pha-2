@@ -67,7 +67,12 @@ export async function signInWithNativeGoogle(): Promise<void> {
     },
   });
 
-  const idToken = response.result?.idToken;
+  // The plugin's TypeScript response is a union that also includes
+  // offline mode, where idToken is not present. We explicitly narrow
+  // the runtime result because this app initializes Google in online mode.
+  const result = response.result as { idToken?: string };
+  const idToken = result.idToken;
+
   if (!idToken) {
     throw new Error("Google không trả về ID token.");
   }
