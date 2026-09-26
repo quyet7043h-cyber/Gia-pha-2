@@ -79,5 +79,26 @@ if (!source.includes("handleGoogleLoginIntent(requestCode, data)")) {
   source = source.slice(0, lastBrace) + method + source.slice(lastBrace);
 }
 
+const socialLoginGradle = path.join(
+  process.cwd(),
+  "node_modules",
+  "@capgo",
+  "capacitor-social-login",
+  "android",
+  "build.gradle",
+);
+
+if (fs.existsSync(socialLoginGradle)) {
+  let gradle = fs.readFileSync(socialLoginGradle, "utf8");
+  const oldDependency = "implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {";
+  const newDependency = `implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {
+            exclude group: 'androidx.browser', module: 'browser'`;
+  if (gradle.includes(oldDependency) && !gradle.includes("exclude group: 'androidx.browser', module: 'browser'")) {
+    gradle = gradle.replace(oldDependency, newDependency);
+    fs.writeFileSync(socialLoginGradle, gradle);
+    console.log("Patched Android browser dependency conflict:", socialLoginGradle);
+  }
+}
+
 fs.writeFileSync(file, source);
 console.log("Configured native Google Sign-In:", file);
