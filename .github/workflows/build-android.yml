@@ -48,6 +48,32 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      - name: Verify Supabase URL is embedded
+        run: |
+          grep -R -F "$VITE_SUPABASE_URL" dist/assets --include='*.js' >/dev/null
+          echo "Supabase URL is embedded in the production bundle."
+
+      - name: Verify Supabase key is embedded without printing it
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          key = os.environ["VITE_SUPABASE_ANON_KEY"]
+          found = False
+          for path in Path("dist/assets").rglob("*.js"):
+              try:
+                  text = path.read_text(encoding="utf-8", errors="ignore")
+              except Exception:
+                  continue
+              if key in text:
+                  found = True
+                  break
+          if not found:
+              raise SystemExit("Supabase API key was not found in the production bundle.")
+          print("Supabase API key is embedded in the production bundle (value hidden).")
+          PY
+
       - name: Create Android project
         run: npx cap add android
 
