@@ -90,6 +90,21 @@ const socialLoginGradle = path.join(
 
 if (fs.existsSync(socialLoginGradle)) {
   let gradle = fs.readFileSync(socialLoginGradle, "utf8");
+
+  // androidbrowserhelper 2.5.0 declares androidx.browser 1.4.0,
+  // while this plugin requires 1.9.0. Force the newer compatible
+  // browser version for every plugin configuration so Gradle's
+  // consistent-resolution constraint cannot select 1.4.0.
+  const resolutionStrategyBlock = `
+configurations.configureEach {
+    resolutionStrategy.force "androidx.browser:browser:1.9.0"
+}
+`;
+
+  if (!gradle.includes('resolutionStrategy.force "androidx.browser:browser:1.9.0"')) {
+    gradle = resolutionStrategyBlock + gradle;
+    console.log("Patched Android browser resolution strategy:", socialLoginGradle);
+  }
   const oldDependency = "implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {";
   const newDependency = `implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {
             exclude group: 'androidx.browser', module: 'browser'`;
