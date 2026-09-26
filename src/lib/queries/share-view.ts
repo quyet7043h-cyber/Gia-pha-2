@@ -162,27 +162,42 @@ export async function fetchPublicClanView(
 }
 
 async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
-  // functions.invoke uses POST by default; we use GET with params in the
-  // query string so the function logic is HTTP-cache-friendly.
-  const base = supabaseUrl;
-  const anon = supabaseAnonKey;
-  const url = `${base}/functions/v1/share-view?${qs}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      // Supabase Edge Functions require the anon key as `apikey` header
-      // even when verify_jwt is false (otherwise the gateway rejects).
-      apikey: anon,
-      Authorization: `Bearer ${anon}`,
+  // Use the official Supabase Functions client instead of a raw fetch.
+  // This is important on Capacitor/Android WebView, where the custom
+  // `apikey` header used by the old GET request was intermittently
+  // reaching the Supabase gateway without the header.
+  const params = new URLSearchParams(qs);
+  const token = params.get("token");
+  const clan = params.get("clan");
+
+  const { data: payload, error } = await supabase.functions.invoke<ShareViewPayload>(
+    "share-view",
+    {
+      method: "POST",
+      body: { ...(token ? { token } : {}), ...(clan ? { clan } : {}) },
+      headers: {
+        apikey: supabaseAnonKey,
+      },
     },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(
-      body.error ?? `share-view error (${res.status})`,
-    );
+  );
+
+  if (error) {
+    let message = error.message;
+    try {
+      const context = (error as { context?: Response }).context;
+      if (context) {
+        const body = await context.clone().json().catch(() => ({}));
+        message = body.error ?? message;
+      }
+    } catch {
+      // Keep the SDK error message when the response is not JSON.
+    }
+    throw new Error(message);
   }
-  const payload = (await res.json()) as ShareViewPayload;
+
+  if (!payload) {
+    throw new Error("share-view returned no data");
+  }
   // The function returns photo_url as a path-only string (no origin),
   // because the storage helper inside Supabase Local would otherwise
   // bake Docker-internal hostnames. Prepend our reachable base.
