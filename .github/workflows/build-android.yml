@@ -85,6 +85,14 @@ jobs:
       - name: Sync web app into Android
         run: npx cap sync android
 
+      - name: Verify native Google Sign-In configuration
+        working-directory: android
+        run: |
+          echo "=== Google Sign-In Android signing fingerprints ==="
+          ./gradlew signingReport
+          echo "=== Social Login browser dependency ==="
+          grep -n -A3 -B2 "androidbrowserhelper:2.5.0" node_modules/@capgo/capacitor-social-login/android/build.gradle || true
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug
