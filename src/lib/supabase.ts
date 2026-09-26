@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "./database.types";
@@ -10,7 +9,6 @@ const normalizeSupabaseUrl = (value: string): string =>
   value.trim().replace(/\/+$/, "").replace(/\/(?:rest\/v1|auth\/v1)$/i, "");
 
 const url = rawUrl ? normalizeSupabaseUrl(rawUrl) : rawUrl;
-const isNative = Capacitor.isNativePlatform();
 
 if (!url || !anonKey) {
   throw new Error(
@@ -27,7 +25,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: !isNative,
-    flowType: isNative ? "pkce" : "implicit",
+    detectSessionInUrl: true,
+    flowType: "implicit",
   },
 });
