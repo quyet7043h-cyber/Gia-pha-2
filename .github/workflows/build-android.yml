@@ -17,6 +17,9 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Checkout repository
@@ -36,6 +39,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+
+      - name: Check Supabase build configuration
+        run: |
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_ANON_KEY"
 
       - name: Build web app
         run: npm run build
