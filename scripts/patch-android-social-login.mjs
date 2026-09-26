@@ -92,27 +92,26 @@ if (fs.existsSync(socialLoginGradle)) {
   let gradle = fs.readFileSync(socialLoginGradle, "utf8");
 
   // androidbrowserhelper 2.5.0 brings androidx.browser 1.4.0 as a strict
-  // constraint. Exclude that transitive dependency because the plugin also
-  // requires the newer androidx.browser version.
-  const helperPattern =
-    /implementation\(\s*(['"])com\.google\.androidbrowserhelper:androidbrowserhelper:2\.5\.0\1\s*\)(?:\s*\{([\s\S]*?)\})?/;
+  // constraint. Exclude that transitive dependency so the plugin's
+  // androidx.browser 1.9.0 requirement can resolve.
+  const helperRegex =
+    /(implementation|compileOnly)\s+(['"])com\.google\.androidbrowserhelper:androidbrowserhelper:2\.5\.0\2(?!\s*\{)/g;
 
-  const helperMatch = gradle.match(helperPattern);
-  if (
-    helperMatch &&
-    !/exclude\s+group:\s*['"]androidx\.browser['"],\s*module:\s*['"]browser['"]/.test(
-      helperMatch[0],
-    )
-  ) {
-    const replacement =
-      `implementation(${helperMatch[1]}com.google.androidbrowserhelper:androidbrowserhelper:2.5.0${helperMatch[1]}) {
-        exclude group: 'androidx.browser', module: 'browser'
-      }`;
-    gradle = gradle.replace(helperPattern, replacement);
-    console.log("Patched androidbrowserhelper browser exclusion:", socialLoginGradle);
-  }
+  let patched = false;
+  gradle = gradle.replace(helperRegex, (_, configuration, quote) => {
+    patched = true;
+    return `${configuration}(${quote}com.google.androidbrowserhelper:androidbrowserhelper:2.5.0${quote}) {
+      exclude group: 'androidx.browser', module: 'browser'
+    }`;
+  });
 
   fs.writeFileSync(socialLoginGradle, gradle);
+  console.log(
+    patched
+      ? "Patched androidbrowserhelper browser exclusion:"
+      : "androidbrowserhelper dependency already patched or not present:",
+    socialLoginGradle,
+  );
 }
 
 fs.writeFileSync(file, source);
