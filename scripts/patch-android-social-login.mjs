@@ -91,36 +91,28 @@ const socialLoginGradle = path.join(
 if (fs.existsSync(socialLoginGradle)) {
   let gradle = fs.readFileSync(socialLoginGradle, "utf8");
 
-  // androidbrowserhelper 2.5.0 declares androidx.browser 1.4.0,
-  // while this plugin requires 1.9.0. Force the newer compatible
-  // browser version for every plugin configuration so Gradle's
-  // consistent-resolution constraint cannot select 1.4.0.
-  const resolutionStrategyBlock = `
-configurations.configureEach {
-    resolutionStrategy.force "androidx.browser:browser:1.9.0"
-}
-`;
-
-  if (!gradle.includes('resolutionStrategy.force "androidx.browser:browser:1.9.0"')) {
-    gradle = resolutionStrategyBlock + gradle;
-    console.log("Patched Android browser resolution strategy:", socialLoginGradle);
-  }
   // androidbrowserhelper 2.5.0 brings androidx.browser 1.4.0 as a strict
-  // constraint. Convert its dependency declaration to an exclude block,
-  // regardless of whether the plugin uses single or double quotes.
+  // constraint. Exclude that transitive dependency because the plugin also
+  // requires the newer androidx.browser version.
   const helperPattern =
-    /implementation\\(\\s*([\\"'])com\\.google\\.androidbrowserhelper:androidbrowserhelper:2\\.5\\.0\\1\\s*\\)(?:\\s*\\{([\\s\\S]*?)\\})?/;
+    /implementation\(\s*(['"])com\.google\.androidbrowserhelper:androidbrowserhelper:2\.5\.0\1\s*\)(?:\s*\{([\s\S]*?)\})?/;
 
   const helperMatch = gradle.match(helperPattern);
-  if (helperMatch && !/exclude\\s+group:\\s*['"]androidx\\.browser['"],\\s*module:\\s*['"]browser['"]/.test(helperMatch[0])) {
+  if (
+    helperMatch &&
+    !/exclude\s+group:\s*['"]androidx\.browser['"],\s*module:\s*['"]browser['"]/.test(
+      helperMatch[0],
+    )
+  ) {
     const replacement =
       `implementation(${helperMatch[1]}com.google.androidbrowserhelper:androidbrowserhelper:2.5.0${helperMatch[1]}) {
-            exclude group: 'androidx.browser', module: 'browser'
-          }`;
+        exclude group: 'androidx.browser', module: 'browser'
+      }`;
     gradle = gradle.replace(helperPattern, replacement);
     console.log("Patched androidbrowserhelper browser exclusion:", socialLoginGradle);
   }
-  }
+
+  fs.writeFileSync(socialLoginGradle, gradle);
 }
 
 fs.writeFileSync(file, source);
