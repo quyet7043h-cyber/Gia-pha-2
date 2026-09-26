@@ -56,7 +56,9 @@
     "three-spritetext": "^1.10.0",
     "xlsx": "^0.18.5",
     "@capacitor/android": "^7.4.4",
-    "@capacitor/core": "^7.4.4"
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/browser": "^7.0.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
