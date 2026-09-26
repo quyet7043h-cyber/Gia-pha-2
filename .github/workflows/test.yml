@@ -17,9 +17,13 @@ jobs:
           cache: npm
 
       - name: Install deps
-        run: npm ci
+        # package.json currently contains Capacitor packages that are not yet
+        # fully reflected in package-lock.json. Use npm install so CI can
+        # reconcile the lockfile instead of failing at npm ci.
+        run: npm install
 
       - name: Setup Supabase CLI
+        id: setup-supabase-cli
         uses: supabase/setup-cli@v1
         with:
           # Pin a specific CLI version. Using `latest` hits the
@@ -84,5 +88,5 @@ jobs:
         run: npm run test:rls
 
       - name: Stop Supabase
-        if: always()
+        if: always() && steps.setup-supabase-cli.outcome == 'success'
         run: supabase stop
