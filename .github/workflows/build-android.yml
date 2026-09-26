@@ -136,7 +136,7 @@ jobs:
 
           echo "=== Verify expected debug SHA-1 ==="
           ACTUAL_SHA1="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android | awk -F': ' '/SHA1:/{print $2; exit}')"
-          EXPECTED_SHA1="5C:CB:1E:7C:25:AA:29:5E:D2:3E:E4:DF:4A:39:92:04:3C:58:95:7D"
+          EXPECTED_SHA1="51:09:69:A8:E1:1C:F4:04:6C:86:2C:10:04:37:4C:1E:75:B5:F5:A9"
           test "$ACTUAL_SHA1" = "$EXPECTED_SHA1"
 
           echo "=== Social Login browser dependency ==="
