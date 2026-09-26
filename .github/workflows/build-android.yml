@@ -92,42 +92,17 @@ jobs:
           mkdir -p "$HOME/.android"
           python3 - <<'PY'
           import base64
-          import subprocess
           from pathlib import Path
 
           source = Path("../.github/android-debug.keystore.b64").read_text(encoding="utf-8").strip()
-          alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+          data = base64.b64decode(source, validate=True)
 
-          if len(source) % 4 != 3 or not source.endswith("="):
-              raise SystemExit(f"Unexpected keystore base64 length: {len(source)}")
-
-          recovered = None
           target = Path.home() / ".android" / "debug.keystore"
-
-          for ch in alphabet:
-              candidate = source[:-1] + ch + "="
-              try:
-                  data = base64.b64decode(candidate, validate=True)
-              except Exception:
-                  continue
-              target.write_bytes(data)
-              result = subprocess.run(
-                  ["keytool", "-list", "-keystore", str(target), "-storepass", "android"],
-                  stdout=subprocess.DEVNULL,
-                  stderr=subprocess.DEVNULL,
-              )
-              if result.returncode == 0:
-                  recovered = candidate
-                  break
-
-          if recovered is None:
-              target.unlink(missing_ok=True)
-              raise SystemExit("Could not recover the fixed Android debug keystore from the repository file.")
-
+          target.write_bytes(data)
           target.chmod(0o600)
+
           print("Fixed Android debug keystore restored successfully.")
           PY
-
       - name: Verify native Google Sign-In configuration
         working-directory: android
         run: |
