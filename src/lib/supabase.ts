@@ -11,7 +11,12 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase = createClient<Database>(url, anonKey, {
+// Export the exact validated values used by the Supabase client so raw
+// Edge Function requests cannot accidentally read a different env value.
+export const supabaseUrl = url;
+export const supabaseAnonKey = anonKey;
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
