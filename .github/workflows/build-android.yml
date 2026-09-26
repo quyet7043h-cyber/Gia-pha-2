@@ -88,10 +88,26 @@ jobs:
       - name: Verify native Google Sign-In configuration
         working-directory: android
         run: |
+          echo "=== Create debug keystore if missing ==="
+          mkdir -p "$HOME/.config/.android"
+          if [ ! -f "$HOME/.config/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.config/.android/debug.keystore" \
+              -storepass android \
+              -alias AndroidDebugKey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
           echo "=== Google Sign-In Android signing fingerprints ==="
           ./gradlew signingReport
+
           echo "=== Social Login browser dependency ==="
-          grep -n -A3 -B2 "androidbrowserhelper:2.5.0" node_modules/@capgo/capacitor-social-login/android/build.gradle || true
+          grep -n -A3 -B2 "androidbrowserhelper:2.5.0" \
+            ../node_modules/@capgo/capacitor-social-login/android/build.gradle || true
 
       - name: Build debug APK
         working-directory: android
