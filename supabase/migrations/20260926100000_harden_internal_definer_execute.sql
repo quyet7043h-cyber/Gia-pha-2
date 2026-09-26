@@ -1,0 +1,26 @@
+-- Security hardening: keep trigger/internal SECURITY DEFINER functions out of the RPC surface.
+-- They are invoked by triggers, cron, or other SECURITY DEFINER routines and do not need
+-- direct execution by browser roles.
+
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT DISTINCT p.oid::regprocedure AS sig
+    FROM pg_trigger t
+    JOIN pg_proc p ON p.oid = t.tgfoid
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.prosecdef
+  LOOP
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM authenticated, anon', r.sig);
+  END LOOP;
+
+  REVOKE EXECUTE ON FUNCTION public.recompute_generation_for_clan(uuid) FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public.prune_share_view_rate() FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public.prune_audit_log(integer) FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public.prune_notification_log(integer) FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public.prune_notifications(integer) FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public._person_descendants(uuid) FROM authenticated, anon;
+  REVOKE EXECUTE ON FUNCTION public._person_ancestors(uuid) FROM authenticated, anon;
+END $$;
