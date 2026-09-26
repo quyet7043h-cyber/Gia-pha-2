@@ -534,6 +534,7 @@ function QuickAddChild({
   const [rows, setRows] = useState<Row[]>([mkRow(""), mkRow(""), mkRow("")]);
   const bulkInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const bulkInitRef = useRef(false);
+  const closeAfterBulkSaveRef = useRef(false);
 
   useEffect(() => {
     if (bulkInitRef.current) return;
@@ -653,16 +654,24 @@ function QuickAddChild({
       await invalidateClanData(queryClient, clanId);
       toast.success(`Đã thêm ${n} người con`);
 
+      if (closeAfterBulkSaveRef.current) {
+        closeAfterBulkSaveRef.current = false;
+        onDone();
+        return;
+      }
+
       const p = deriveNamePrefix(focal, children, "M");
       setRows([mkRow(p), mkRow(p), mkRow(p)]);
 
       setTimeout(() => focusAtEnd(bulkInputRefs.current[0]), 0);
     },
 
-    onError: (e) =>
+    onError: (e) => {
+      closeAfterBulkSaveRef.current = false;
       toast.error("Không thêm được", {
         description: (e as Error).message,
-      }),
+      });
+    },
   });
 
   function onSubmitSingle(e: React.FormEvent) {
@@ -1004,10 +1013,20 @@ function QuickAddChild({
             <Button
               type="button"
               variant="outline"
-              onClick={onDone}
+              onClick={() => {
+                if (bulkMutation.isPending) return;
+                if (rows.every((r) => !r.name.trim())) return;
+
+                closeAfterBulkSaveRef.current = true;
+                bulkMutation.mutate();
+              }}
+              disabled={
+                bulkMutation.isPending ||
+                rows.every((r) => !r.name.trim())
+              }
               className="shrink-0"
             >
-              Xong
+              {bulkMutation.isPending ? "Đang lưu…" : "Xong"}
             </Button>
           </div>
         </form>
