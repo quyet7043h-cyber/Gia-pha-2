@@ -170,8 +170,14 @@ async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
   const token = params.get("token");
   const clan = params.get("clan");
 
+  const functionUrl = new URL(`${supabaseUrl}/functions/v1/share-view`);
+  // Android WebView can be unreliable with custom request headers. Keep the
+  // publishable key in the URL as a fallback; Supabase accepts apikey from
+  // either the header or URL parameter.
+  functionUrl.searchParams.set("apikey", supabaseAnonKey);
+
   const { data: payload, error } = await supabase.functions.invoke<ShareViewPayload>(
-    "share-view",
+    functionUrl.pathname + functionUrl.search,
     {
       method: "POST",
       body: { ...(token ? { token } : {}), ...(clan ? { clan } : {}) },
