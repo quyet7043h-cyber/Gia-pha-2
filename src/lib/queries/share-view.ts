@@ -162,10 +162,8 @@ export async function fetchPublicClanView(
 }
 
 async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
-  // Use the official Supabase Functions client instead of a raw fetch.
-  // This is important on Capacitor/Android WebView, where the custom
-  // `apikey` header used by the old GET request was intermittently
-  // reaching the Supabase gateway without the header.
+  // Call the Edge Function directly and provide the publishable key in both
+  // the URL and header so Android WebView cannot lose the gateway key.
   const params = new URLSearchParams(qs);
   const token = params.get("token");
   const clan = params.get("clan");
@@ -198,22 +196,6 @@ async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
         body?.message ??
         `share-view (${res.status})`,
     );
-  }
-
-  const error = null;
-
-  if (error) {
-    let message = error.message;
-    try {
-      const context = (error as { context?: Response }).context;
-      if (context) {
-        const body = await context.clone().json().catch(() => ({}));
-        message = body.error ?? message;
-      }
-    } catch {
-      // Keep the SDK error message when the response is not JSON.
-    }
-    throw new Error(message);
   }
 
   if (!payload) {
