@@ -20,6 +20,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GOOGLE_WEB_CLIENT_ID: ${{ secrets.VITE_GOOGLE_WEB_CLIENT_ID }}
 
     steps:
       - name: Checkout repository
@@ -44,6 +45,7 @@ jobs:
         run: |
           test -n "$VITE_SUPABASE_URL"
           test -n "$VITE_SUPABASE_ANON_KEY"
+          test -n "$VITE_GOOGLE_WEB_CLIENT_ID"
 
       - name: Build web app
         run: npm run build
@@ -76,6 +78,9 @@ jobs:
 
       - name: Create Android project
         run: npx cap add android
+
+      - name: Configure Android native Google Sign-In
+        run: node scripts/patch-android-social-login.mjs
 
       - name: Sync web app into Android
         run: npx cap sync android
