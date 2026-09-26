@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAnonKey, supabaseUrl } from "@/lib/supabase";
 
 export interface ShareViewPerson {
   id: string;
@@ -164,8 +164,8 @@ export async function fetchPublicClanView(
 async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
   // functions.invoke uses POST by default; we use GET with params in the
   // query string so the function logic is HTTP-cache-friendly.
-  const base = import.meta.env.VITE_SUPABASE_URL;
-  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const base = supabaseUrl;
+  const anon = supabaseAnonKey;
   const url = `${base}/functions/v1/share-view?${qs}`;
   const res = await fetch(url, {
     method: "GET",
