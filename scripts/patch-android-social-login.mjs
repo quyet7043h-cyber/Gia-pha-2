@@ -105,13 +105,21 @@ configurations.configureEach {
     gradle = resolutionStrategyBlock + gradle;
     console.log("Patched Android browser resolution strategy:", socialLoginGradle);
   }
-  const oldDependency = "implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {";
-  const newDependency = `implementation('com.google.androidbrowserhelper:androidbrowserhelper:2.5.0') {
-            exclude group: 'androidx.browser', module: 'browser'`;
-  if (gradle.includes(oldDependency) && !gradle.includes("exclude group: 'androidx.browser', module: 'browser'")) {
-    gradle = gradle.replace(oldDependency, newDependency);
-    fs.writeFileSync(socialLoginGradle, gradle);
-    console.log("Patched Android browser dependency conflict:", socialLoginGradle);
+  // androidbrowserhelper 2.5.0 brings androidx.browser 1.4.0 as a strict
+  // constraint. Convert its dependency declaration to an exclude block,
+  // regardless of whether the plugin uses single or double quotes.
+  const helperPattern =
+    /implementation\\(\\s*([\\"'])com\\.google\\.androidbrowserhelper:androidbrowserhelper:2\\.5\\.0\\1\\s*\\)(?:\\s*\\{([\\s\\S]*?)\\})?/;
+
+  const helperMatch = gradle.match(helperPattern);
+  if (helperMatch && !/exclude\\s+group:\\s*['"]androidx\\.browser['"],\\s*module:\\s*['"]browser['"]/.test(helperMatch[0])) {
+    const replacement =
+      `implementation(${helperMatch[1]}com.google.androidbrowserhelper:androidbrowserhelper:2.5.0${helperMatch[1]}) {
+            exclude group: 'androidx.browser', module: 'browser'
+          }`;
+    gradle = gradle.replace(helperPattern, replacement);
+    console.log("Patched androidbrowserhelper browser exclusion:", socialLoginGradle);
+  }
   }
 }
 
