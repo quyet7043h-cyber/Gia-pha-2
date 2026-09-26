@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+
+import { Capacitor } from "@capacitor/core";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { AuthLayout } from "@/components/AuthLayout";
@@ -12,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { track } from "@/lib/analytics";
 import { getDemoClanIds } from "@/lib/queries/platformSettings";
+import { signInWithNativeGoogle } from "@/lib/native-google-auth";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "password" | "magic-link";
@@ -56,17 +59,27 @@ export default function Login() {
     track("login_click", { method: "google" });
     setOauthError(null);
     setOauthBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: next
-          ? `${window.location.origin}${next}`
-          : `${window.location.origin}/clans`,
-      },
-    });
-    // Thành công thì trình duyệt đang chuyển hướng; chỉ rơi vào đây khi lỗi.
-    if (error) {
-      setOauthError(error.message);
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await signInWithNativeGoogle();
+        track("signed_in", { method: "google-native" });
+        navigate(next ?? "/clans", { replace: true });
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: next
+            ? `${window.location.origin}${next}`
+            : `${window.location.origin}/clans`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      setOauthError(error instanceof Error ? error.message : "Đăng nhập Google thất bại.");
       setOauthBusy(false);
     }
   }
