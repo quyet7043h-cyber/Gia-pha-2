@@ -199,6 +199,7 @@ async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
     throw new Error("share-view returned no data");
   }
   // The function returns photo_url as a path-only string (no origin),
+  const base = supabaseUrl;
   // because the storage helper inside Supabase Local would otherwise
   // bake Docker-internal hostnames. Prepend our reachable base.
   const fixUrl = (u: string) => (u.startsWith("/") ? `${base}${u}` : u);
