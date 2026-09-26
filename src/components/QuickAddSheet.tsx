@@ -1070,6 +1070,7 @@ function QuickAddSpouse({
   );
   const [isLiving, setIsLiving] = useState(true);
   const nameRef = useRef<HTMLInputElement>(null);
+  const closeAfterSaveRef = useRef(false);
 
   if (focal && !genderTouched && gender !== defaultGender) {
     setGender(defaultGender);
@@ -1099,6 +1100,12 @@ function QuickAddSpouse({
       await invalidateClanData(queryClient, clanId);
       toast.success("Đã thêm vợ/chồng", { description: name.trim() });
 
+      if (closeAfterSaveRef.current) {
+        closeAfterSaveRef.current = false;
+        onDone();
+        return;
+      }
+
       setName("");
       setBirth(EMPTY_CALENDAR_DATE);
       setDeath(EMPTY_LUNAR_CALENDAR_DATE);
@@ -1106,10 +1113,12 @@ function QuickAddSpouse({
       nameRef.current?.focus();
     },
 
-    onError: (e) =>
+    onError: (e) => {
+      closeAfterSaveRef.current = false;
       toast.error("Không thêm được", {
         description: (e as Error).message,
-      }),
+      });
+    },
   });
 
   return (
@@ -1177,10 +1186,16 @@ function QuickAddSpouse({
         <Button
           type="button"
           variant="outline"
-          onClick={onDone}
+          onClick={() => {
+            if (!name.trim() || mutation.isPending) return;
+
+            closeAfterSaveRef.current = true;
+            mutation.mutate();
+          }}
+          disabled={mutation.isPending || !name.trim()}
           className="shrink-0"
         >
-          Xong
+          {mutation.isPending ? "Đang lưu…" : "Xong"}
         </Button>
       </div>
     </form>
