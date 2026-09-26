@@ -1,9 +1,8 @@
 import { Capacitor } from "@capacitor/core";
-import { SocialLogin } from "@capgo/capacitor-social-login";
-
 import { supabase } from "@/lib/supabase";
 
 let initialized = false;
+let socialLogin: typeof import("@capgo/capacitor-social-login").SocialLogin | null = null;
 
 function createNonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -28,7 +27,10 @@ async function ensureInitialized(): Promise<void> {
     );
   }
 
-  await SocialLogin.initialize({
+  const module = await import("@capgo/capacitor-social-login");
+  socialLogin = module.SocialLogin;
+
+  await socialLogin.initialize({
     google: {
       webClientId: clientId,
       mode: "online",
@@ -52,7 +54,11 @@ export async function signInWithNativeGoogle(): Promise<void> {
   const rawNonce = createNonce();
   const nonceDigest = await sha256Hex(rawNonce);
 
-  const response = await SocialLogin.login({
+  if (!socialLogin) {
+    throw new Error("Google Sign-In chưa được khởi tạo.");
+  }
+
+  const response = await socialLogin.login({
     provider: "google",
     options: {
       scopes: ["email", "profile"],
