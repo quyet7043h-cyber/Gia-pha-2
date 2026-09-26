@@ -23,7 +23,7 @@ const RATE_PER_MINUTE = 60;
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 function json(body: unknown, init: ResponseInit = {}): Response {
@@ -84,13 +84,27 @@ interface FamilyRow {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
-  if (req.method !== "GET") return err("Method not allowed", 405);
+  if (req.method !== "GET" && req.method !== "POST") return err("Method not allowed", 405);
 
-  const url = new URL(req.url);
-  const token = url.searchParams.get("token");
-  // Chế độ xem trước công khai theo clan (không cần token / không đăng nhập):
-  // ?clan=<id> — chỉ phục vụ dòng họ đã bật công khai + cho xem cây.
-  const clanParam = url.searchParams.get("clan");
+  let token: string | null = null;
+  let clanParam: string | null = null;
+
+  if (req.method === "POST") {
+    try {
+      const body = await req.json();
+      token = typeof body?.token === "string" ? body.token : null;
+      clanParam = typeof body?.clan === "string" ? body.clan : null;
+    } catch {
+      return err("Invalid JSON body", 400);
+    }
+  } else {
+    const url = new URL(req.url);
+    token = url.searchParams.get("token");
+    clanParam = url.searchParams.get("clan");
+  }
+
+  // Chế độ xem trước công khai theo clan: chỉ phục vụ dòng họ đã
+  // bật công khai + cho xem cây.
   if (!token && !clanParam) return err("Missing token", 400);
 
   const ip =
