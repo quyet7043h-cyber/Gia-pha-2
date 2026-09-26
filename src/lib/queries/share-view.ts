@@ -176,16 +176,31 @@ async function fetchShareViewQuery(qs: string): Promise<ShareViewPayload> {
   // either the header or URL parameter.
   functionUrl.searchParams.set("apikey", supabaseAnonKey);
 
-  const { data: payload, error } = await supabase.functions.invoke<ShareViewPayload>(
-    functionUrl.pathname + functionUrl.search,
-    {
-      method: "POST",
-      body: { ...(token ? { token } : {}), ...(clan ? { clan } : {}) },
-      headers: {
-        apikey: supabaseAnonKey,
-      },
+  const res = await fetch(functionUrl.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: supabaseAnonKey,
     },
-  );
+    body: JSON.stringify({
+      ...(token ? { token } : {}),
+      ...(clan ? { clan } : {}),
+    }),
+  });
+
+  let payload: ShareViewPayload | null = null;
+  if (res.ok) {
+    payload = (await res.json()) as ShareViewPayload;
+  } else {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      body?.error ??
+        body?.message ??
+        `share-view (${res.status})`,
+    );
+  }
+
+  const error = null;
 
   if (error) {
     let message = error.message;
