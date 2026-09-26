@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { track } from "@/lib/analytics";
 import { getDemoClanIds } from "@/lib/queries/platformSettings";
-import { signInWithNativeGoogle } from "@/lib/native-google-auth";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "password" | "magic-link";
@@ -62,6 +61,7 @@ export default function Login() {
 
     try {
       if (Capacitor.isNativePlatform()) {
+        const { signInWithNativeGoogle } = await import("@/lib/native-google-auth");
         await signInWithNativeGoogle();
         track("signed_in", { method: "google-native" });
         navigate(next ?? "/clans", { replace: true });
