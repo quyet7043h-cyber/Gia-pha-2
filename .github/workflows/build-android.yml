@@ -13,6 +13,7 @@ on:
       - "vite.config.ts"
       - "capacitor.config.ts"
       - ".github/workflows/build-android.yml"
+      - ".github/android-debug.keystore.b64"
 
 jobs:
   build-android:
@@ -85,25 +86,23 @@ jobs:
       - name: Sync web app into Android
         run: npx cap sync android
 
+      - name: Configure fixed debug signing key
+        working-directory: android
+        run: |
+          mkdir -p "$HOME/.android"
+          base64 --decode ../.github/android-debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+
       - name: Verify native Google Sign-In configuration
         working-directory: android
         run: |
-          echo "=== Create debug keystore if missing ==="
-          mkdir -p "$HOME/.config/.android"
-          if [ ! -f "$HOME/.config/.android/debug.keystore" ]; then
-            keytool -genkeypair -v \
-              -keystore "$HOME/.config/.android/debug.keystore" \
-              -storepass android \
-              -alias AndroidDebugKey \
-              -keypass android \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
-
           echo "=== Google Sign-In Android signing fingerprints ==="
           ./gradlew signingReport
+
+          echo "=== Verify expected debug SHA-1 ==="
+          ACTUAL_SHA1="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android | awk -F': ' '/SHA1:/{print $2; exit}')"
+          EXPECTED_SHA1="5C:CB:1E:7C:25:AA:29:5E:D2:3E:E4:DF:4A:39:92:04:3C:58:95:7D"
+          test "$ACTUAL_SHA1" = "$EXPECTED_SHA1"
 
           echo "=== Social Login browser dependency ==="
           grep -n -A3 -B2 "androidbrowserhelper:2.5.0" \
