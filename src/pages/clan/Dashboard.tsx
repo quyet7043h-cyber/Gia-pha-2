@@ -28,7 +28,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { EnablePushPrompt } from "@/components/EnablePushPrompt";
 import { RecentActivityPanel } from "@/components/RecentActivityPanel";
 import { TodayHubCard } from "@/components/TodayHubCard";
-import { CatholicDailyCalendar } from "@/components/CatholicDailyCalendar";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Button } from "@/components/ui/button";
 import { VideoEmptyState } from "@/components/VideoEmptyState";
