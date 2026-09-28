@@ -2654,6 +2654,7 @@ export type Database = {
           nickname: string | null
           photo_path: string | null
           posthumous_name: string | null
+          saint_name: string | null
         }
         Insert: {
           bio?: never
@@ -2688,6 +2689,8 @@ export type Database = {
           nickname?: never
           photo_path?: never
           posthumous_name?: never
+          saint_name?: never
+          saint_name?: never
         }
         Update: {
           bio?: never
