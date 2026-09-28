@@ -63,14 +63,42 @@ export async function downloadClanBookPdf(
   const today = new Date().toISOString().slice(0, 10);
   const filename = `gia-pha_${safe}_${today}.pdf`;
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  // Android Capacitor WebView không xử lý ổn định thẻ <a download> cho Blob.
+  // Trên native, ghi PDF vào thư mục cache rồi mở Android Share Sheet để
+  // người dùng có thể chọn "Lưu vào thiết bị", Drive, Zalo, v.v.
+  const { Capacitor } = await import("@capacitor/core");
+  if (Capacitor.isNativePlatform()) {
+    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+      import("@capacitor/filesystem"),
+      import("@capacitor/share"),
+    ]);
+
+    const base64 = await blobToBase64(blob);
+    const path = `pdf/${filename}`;
+    const saved = await Filesystem.writeFile({
+      path,
+      data: base64,
+      directory: Directory.Cache,
+      recursive: true,
+    });
+
+    await Share.share({
+      title: filename,
+      text: "Sổ gia phả PDF",
+      url: saved.uri,
+      dialogTitle: "Chia sẻ / lưu file PDF",
+    });
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Đợi một nhịp để WebView/browser bắt đầu download trước khi revoke.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   return { filename, bytes: blob.size };
 }
@@ -150,6 +178,19 @@ async function fetchCoverDataUris(
     }),
   );
   return out;
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onloadend = () => {
+      const result = String(fr.result ?? "");
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    fr.onerror = () => reject(fr.error ?? new Error("FileReader failed"));
+    fr.readAsDataURL(blob);
+  });
 }
 
 function blobToDataUri(blob: Blob): Promise<string> {
