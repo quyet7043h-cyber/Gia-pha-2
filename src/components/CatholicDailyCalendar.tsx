@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
+import { Romcal } from "romcal";
+import { Vietnam_Vi } from "@romcal/calendar.vietnam";
 
 type LiturgicalDay = {
   key?: string;
@@ -25,15 +27,15 @@ type RomcalModule = {
   };
 };
 
-const ROMCAL_VERSION = "3.0.0-dev.125";
-
 const SEASON_LABEL: Record<string, string> = {
   ADVENT: "Mùa Vọng",
   CHRISTMASTIDE: "Mùa Giáng Sinh",
+  EARLY_ORDINARY_TIME: "Mùa Thường Niên",
+  LATER_ORDINARY_TIME: "Mùa Thường Niên",
   ORDINARY_TIME: "Mùa Thường Niên",
   LENT: "Mùa Chay",
+  HOLY_WEEK: "Tuần Thánh",
   EASTER_TRIDUUM: "Tam Nhật Vượt Qua",
-  EASTER_TITDE: "Mùa Phục Sinh",
   EASTER: "Mùa Phục Sinh",
 };
 
@@ -55,76 +57,9 @@ const COLOR_LABEL: Record<string, string> = {
   BLACK: "Đen",
 };
 
-function isoDate(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(value: string, amount: number) {
-  const d = new Date(`${value}T12:00:00`);
-  d.setDate(d.getDate() + amount);
-  return isoDate(d);
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("vi-VN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(`${value}T12:00:00`));
-}
-
-function seasonLabel(day?: LiturgicalDay) {
-  const raw = day?.seasonNames?.[0] ?? day?.seasons?.[0];
-  if (!raw) return "Phụng vụ";
-  return SEASON_LABEL[raw] ?? raw;
-}
-
-function typeLabel(day?: LiturgicalDay) {
-  return day?.rankName ?? (day?.rank ? TYPE_LABEL[day.rank] ?? day.rank : undefined);
-}
-
-function colorLabel(day?: LiturgicalDay) {
-  const raw = day?.colors?.[0];
-  return raw ? COLOR_LABEL[raw] ?? raw : undefined;
-}
-
 async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
-  // Romcal 3 + lịch riêng cho Việt Nam. Học Giáo Lý cũng đang dùng romcal
-  // 3.0.0-dev.125 cho lịch phụng vụ tiếng Việt.
-  const [romcalModule, vietnamModule] = await Promise.all([
-    import(/* @vite-ignore */ `https://esm.sh/romcal@${ROMCAL_VERSION}`),
-    import(
-      /* @vite-ignore */
-      `https://esm.sh/@romcal/calendar.vietnam@${ROMCAL_VERSION}`
-    ),
-  ]);
-
-  const RomcalCtor = (romcalModule as RomcalModule).Romcal;
-  if (!RomcalCtor) {
-    throw new Error("Không tải được Romcal.");
-  }
-
-  const vietnamExports = vietnamModule as Record<string, unknown>;
-  const localizedCalendar =
-    vietnamExports.Vietnam_Vi ??
-    vietnamExports.Vietnam ??
-    Object.values(vietnamExports).find(
-      (value) =>
-        value &&
-        typeof value === "object" &&
-        ("calendar" in value || "locale" in value),
-    );
-
-  if (!localizedCalendar) {
-    throw new Error("Không tải được lịch Công giáo Việt Nam.");
-  }
-
-  const romcal = new RomcalCtor({
-    localizedCalendar,
+  const romcal = new Romcal({
+    localizedCalendar: Vietnam_Vi,
     scope: "gregorian",
     strictMode: true,
   });
