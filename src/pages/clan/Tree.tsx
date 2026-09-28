@@ -601,6 +601,12 @@ export default function Tree() {
               Array.from(tspans).find(
                 (t) => String(t.textContent ?? "").trim() === fullNameValue,
               ) ?? tspans[1];
+            // Remove family-chart's own saint placeholder. We replace it
+            // with a dedicated tspan below, while keeping the remaining
+            // date/extra tspans in their original indexes.
+            const saintPlaceholder =
+              Array.from(tspans).find((t) => t !== nameTspan) ?? null;
+            saintPlaceholder?.remove();
 
             // family-chart owns the card SVG and can rebuild its tspans.
             // Render Tên Thánh as a dedicated SVG <text> element so it is
