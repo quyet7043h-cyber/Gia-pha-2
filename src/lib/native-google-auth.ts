@@ -17,6 +17,52 @@ async function sha256Hex(value: string): Promise<string> {
   ).join("");
 }
 
+function maskClientId(clientId: string): string {
+  if (clientId.length < 16) return "***";
+  return `${clientId.slice(0, 12)}…${clientId.slice(-8)}`;
+}
+
+function diagnosticContext(clientId: string) {
+  return {
+    platform: Capacitor.getPlatform(),
+    native: Capacitor.isNativePlatform(),
+    packageId: "com.giapha.donghoviet",
+    webClientId: maskClientId(clientId),
+    userAgent: navigator.userAgent,
+  };
+}
+
+function makeDiagnosticError(stage: string, error: unknown, context?: Record<string, unknown>): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : "";
+  const name =
+    typeof error === "object" && error !== null && "name" in error
+      ? String((error as { name?: unknown }).name)
+      : "";
+
+  console.error("[NativeGoogleAuth]", {
+    stage,
+    code,
+    name,
+    message,
+    ...context,
+  });
+
+  return new Error(
+    [
+      `Google Sign-In lỗi ở bước: ${stage}`,
+      code ? `code=${code}` : "",
+      name ? `name=${name}` : "",
+      message ? `message=${message}` : "",
+    ]
+      .filter(Boolean)
+      .join(" | "),
+  );
+}
+
 async function ensureInitialized(): Promise<void> {
   if (initialized) return;
 
@@ -30,12 +76,16 @@ async function ensureInitialized(): Promise<void> {
   const module = await import("@capgo/capacitor-social-login");
   socialLogin = module.SocialLogin;
 
-  await socialLogin.initialize({
-    google: {
-      webClientId: clientId,
-      mode: "online",
-    },
-  });
+  try {
+    await socialLogin.initialize({
+      google: {
+        webClientId: clientId,
+        mode: "online",
+      },
+    });
+  } catch (error) {
+    throw makeDiagnosticError("initialize", error, diagnosticContext(clientId));
+  }
 
   initialized = true;
 }
@@ -49,6 +99,13 @@ export async function signInWithNativeGoogle(): Promise<void> {
     throw new Error("Native Google Sign-In chỉ dùng trong ứng dụng Android.");
   }
 
+  const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID;
+  if (!clientId) {
+    throw new Error(
+      "Thiếu VITE_GOOGLE_WEB_CLIENT_ID. Hãy thêm Google Web Client ID vào GitHub Actions Secrets.",
+    );
+  }
+
   await ensureInitialized();
 
   const rawNonce = createNonce();
@@ -58,30 +115,63 @@ export async function signInWithNativeGoogle(): Promise<void> {
     throw new Error("Google Sign-In chưa được khởi tạo.");
   }
 
-  const response = await socialLogin.login({
-    provider: "google",
-    options: {
-      scopes: ["email", "profile"],
-      nonce: nonceDigest,
-      filterByAuthorizedAccounts: false,
-    },
-  });
+  let response: Awaited<ReturnType<typeof socialLogin.login>>;
+  try {
+    response = await socialLogin.login({
+      provider: "google",
+      options: {
+        scopes: ["email", "profile"],
+        nonce: nonceDigest,
+        filterByAuthorizedAccounts: false,
+      },
+    });
+  } catch (error) {
+    throw makeDiagnosticError("credential-manager-login", error, {
+      ...diagnosticContext(clientId),
+      nonce: "sha256(rawNonce)",
+    });
+  }
 
-  // The plugin's TypeScript response is a union that also includes
-  // offline mode, where idToken is not present. We explicitly narrow
-  // the runtime result because this app initializes Google in online mode.
   const result = response.result as { idToken?: string };
   const idToken = result.idToken;
 
   if (!idToken) {
-    throw new Error("Google không trả về ID token.");
+    throw makeDiagnosticError(
+      "id-token",
+      new Error("Google không trả về ID token."),
+      {
+        ...diagnosticContext(clientId),
+        resultType: typeof response.result,
+      },
+    );
   }
 
-  const { error } = await supabase.auth.signInWithIdToken({
-    provider: "google",
-    token: idToken,
-    nonce: rawNonce,
-  });
+  try {
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+      nonce: rawNonce,
+    });
 
-  if (error) throw error;
+    if (error) {
+      throw makeDiagnosticError(
+        "supabase-sign-in-with-id-token",
+        error,
+        diagnosticContext(clientId),
+      );
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("Google Sign-In lỗi ở bước:")
+    ) {
+      throw error;
+    }
+
+    throw makeDiagnosticError(
+      "supabase-sign-in-with-id-token",
+      error,
+      diagnosticContext(clientId),
+    );
+  }
 }
