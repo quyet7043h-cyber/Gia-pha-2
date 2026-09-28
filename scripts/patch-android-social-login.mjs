@@ -103,6 +103,12 @@ const googleProvider = path.join(
 
 if (fs.existsSync(googleProvider)) {
   let googleSource = fs.readFileSync(googleProvider, "utf8");
+  if (!googleSource.includes("import com.google.android.libraries.identity.googleid.GetGoogleIdOption;")) {
+    googleSource = googleSource.replace(
+      "import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;",
+      "import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;\nimport com.google.android.libraries.identity.googleid.GetGoogleIdOption;",
+    );
+  }
   const standardBlock = `GetSignInWithGoogleOption.Builder googleIdOptionBuilder = new GetSignInWithGoogleOption.Builder(this.clientId);
 
             if (!nonce.isEmpty()) {
