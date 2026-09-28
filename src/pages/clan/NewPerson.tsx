@@ -166,7 +166,6 @@ export default function NewPerson() {
         birth_place: birthPlace.trim() || null,
         burial_place: burialPlace.trim() || null,
         saint_name: saintName.trim() || null,
-        saint_name: saintName.trim() || null,
         courtesy_name: courtesyName.trim() || null,
         nickname: nickname.trim() || null,
         posthumous_name: posthumousName.trim() || null,
