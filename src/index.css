@@ -143,6 +143,10 @@
        vertical scrolling; family-chart's own pinch/pan is handled
        by an inner element with its own touch-action override. */
     touch-action: pan-y;
+    /* Android 15/16 can draw the WebView edge-to-edge. Keep the app
+       content below the status bar / camera cutout when the system
+       provides a safe-area inset. */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* Hide scrollbars on touch-only devices (mobile / most tablets).
