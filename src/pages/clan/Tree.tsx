@@ -576,7 +576,9 @@ export default function Tree() {
           // dòng giỗ/thọ.
           .setCardDim({
             w: cardW,
-            h: showDeceasedDetails ? 74 : 64,
+            // Đồng bộ đúng chiều cao với cardH để dòng Tên Thánh không bị
+            // cắt/ẩn bởi SVG card của family-chart.
+            h: cardH,
             text_x: 64,
             text_y: 14,
             img_w: 50,
@@ -607,7 +609,7 @@ export default function Tree() {
               saintTspan.setAttribute("dy", "0");
               // Tên Thánh nổi bật: lớn hơn tên thường, in đậm và cùng
               // màu với họ tên.
-              saintTspan.setAttribute("font-size", "16");
+              saintTspan.setAttribute("font-size", "12");
               saintTspan.setAttribute("font-weight", "700");
               saintTspan.setAttribute(
                 "fill",
