@@ -114,10 +114,6 @@ if (fs.existsSync(googleProvider)) {
             if (!nonce.isEmpty()) {
                 googleIdOptionBuilder.setNonce(nonce);
             }
-            if (this.hostedDomain != null && !this.hostedDomain.isEmpty()) {
-                googleIdOptionBuilder.setHostedDomainFilter(this.hostedDomain);
-            }
-
             requestBuilder.addCredentialOption(googleIdOptionBuilder.build());`;
   const replacementBlock = `GetGoogleIdOption.Builder googleIdOptionBuilder = new GetGoogleIdOption.Builder()
                 .setServerClientId(this.clientId)
