@@ -977,6 +977,36 @@ export default function Tree() {
         // Re-fit on container resize (window resize, drawer expand/collapse,
         // orientation change). family-chart's updateTree with no `initial`
         // and tree_position='fit' (the default) re-runs the same fit math.
+        // family-chart recreates card text nodes during updateTree(), including
+        // when the container is resized. Re-apply the saint name after that DOM rebuild.
+        const restoreSaintNamesAfterTreeUpdate = () => {
+          node.querySelectorAll<SVGTextElement>(".card-text text").forEach((textEl) => {
+            let owner: Element | null = textEl;
+            let datum: { data?: DatumNode } | undefined;
+            while (owner) {
+              const candidate = (owner as unknown as { __data__?: unknown }).__data__;
+              if (candidate && typeof candidate === "object") {
+                datum = candidate as { data?: DatumNode };
+                break;
+              }
+              owner = owner.parentElement;
+            }
+            const fields = datum?.data?.data ?? {};
+            const saintValue = String(fields["saint_name"] ?? "").trim();
+            if (!saintValue) return;
+            textEl.querySelector(".tree-saint-name")?.remove();
+            const saintText = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            saintText.setAttribute("class", "tree-saint-name");
+            saintText.setAttribute("x", "0");
+            saintText.setAttribute("dy", "0");
+            saintText.setAttribute("text-anchor", "start");
+            saintText.setAttribute("font-size", "12");
+            saintText.setAttribute("font-weight", "700");
+            saintText.textContent = saintValue;
+            textEl.insertBefore(saintText, textEl.firstChild);
+          });
+        };
+
         if (typeof ResizeObserver !== "undefined") {
           let last = node.getBoundingClientRect().width;
           resizeObserver = new ResizeObserver(() => {
@@ -984,6 +1014,10 @@ export default function Tree() {
             if (Math.abs(next - last) < 1) return; // ignore sub-pixel noise
             last = next;
             chart?.updateTree({ initial: false });
+            requestAnimationFrame(() => {
+              restoreSaintNamesAfterTreeUpdate();
+              requestAnimationFrame(restoreSaintNamesAfterTreeUpdate);
+            });
           });
           resizeObserver.observe(node);
         }
