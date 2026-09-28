@@ -65,6 +65,7 @@ export function EditPersonForm({
   const [death, setDeath] = useState<CalendarDateValue>(EMPTY_CALENDAR_DATE);
   const [birthPlace, setBirthPlace] = useState("");
   const [burialPlace, setBurialPlace] = useState("");
+  const [saintName, setSaintName] = useState("");
   const [courtesyName, setCourtesyName] = useState("");
   const [nickname, setNickname] = useState("");
   const [posthumousName, setPosthumousName] = useState("");
@@ -91,6 +92,7 @@ export function EditPersonForm({
     death,
     birthPlace,
     burialPlace,
+    saintName,
     courtesyName,
     nickname,
     posthumousName,
@@ -117,6 +119,7 @@ export function EditPersonForm({
     setDeath(d.death);
     setBirthPlace(d.birthPlace);
     setBurialPlace(d.burialPlace);
+    setSaintName(d.saintName ?? "");
     setCourtesyName(d.courtesyName);
     setNickname(d.nickname);
     setPosthumousName(d.posthumousName);
@@ -164,6 +167,7 @@ export function EditPersonForm({
     );
     setBirthPlace(person.birth_place ?? "");
     setBurialPlace(person.burial_place ?? "");
+    setSaintName(person.saint_name ?? "");
     setCourtesyName(person.courtesy_name ?? "");
     setNickname(person.nickname ?? "");
     setPosthumousName(person.posthumous_name ?? "");
@@ -174,6 +178,7 @@ export function EditPersonForm({
       person.lifespan_years != null ? String(person.lifespan_years) : "",
     );
     if (
+      person.saint_name ||
       person.courtesy_name ||
       person.nickname ||
       person.posthumous_name ||
@@ -227,6 +232,8 @@ export function EditPersonForm({
         death_anniv_lunar_is_leap: anniv.death_anniv_lunar_is_leap,
         birth_place: birthPlace || null,
         burial_place: burialPlace || null,
+        saint_name: saintName.trim() || null,
+        saint_name: saintName.trim() || null,
         courtesy_name: courtesyName.trim() || null,
         nickname: nickname.trim() || null,
         posthumous_name: posthumousName.trim() || null,
@@ -394,7 +401,7 @@ export function EditPersonForm({
                 Sửa chi tiết khác
               </div>
               <div className="text-sm text-muted-foreground mt-0.5">
-                Tên tự, tên húy, tên thụy, ngày mất, con thứ mấy,
+                Tên Thánh, tên tự, tên húy, tên thụy, ngày mất, con thứ mấy,
                 nơi sinh, nơi an táng, tiểu sử. Bỏ qua nếu chưa cần.
               </div>
             </div>
@@ -416,6 +423,16 @@ export function EditPersonForm({
             </button>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="saint_name">Tên Thánh</Label>
+            <Input
+              id="saint_name"
+              maxLength={100}
+              value={saintName}
+              onChange={(e) => setSaintName(e.target.value)}
+              placeholder="Ví dụ: Giuse, Maria, Phêrô"
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="courtesy_name">Tên tự/ Tên hiệu (Nếu có)</Label>
             <Input
