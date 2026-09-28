@@ -79,6 +79,63 @@ if (!source.includes("handleGoogleLoginIntent(requestCode, data)")) {
   source = source.slice(0, lastBrace) + method + source.slice(lastBrace);
 }
 
+
+// Android 16 workaround: force the Google Credential Manager path that uses
+// GetGoogleIdOption with explicit account filtering disabled. Some Android 16
+// devices can return [16] Account reauth failed with GetSignInWithGoogleOption
+// even after CredentialManager.clearCredentialState().
+const googleProvider = path.join(
+  process.cwd(),
+  "node_modules",
+  "@capgo",
+  "capacitor-social-login",
+  "android",
+  "src",
+  "main",
+  "java",
+  "ee",
+  "forgr",
+  "capacitor",
+  "social",
+  "login",
+  "GoogleProvider.java",
+);
+
+if (fs.existsSync(googleProvider)) {
+  let googleSource = fs.readFileSync(googleProvider, "utf8");
+  const standardBlock = `GetSignInWithGoogleOption.Builder googleIdOptionBuilder = new GetSignInWithGoogleOption.Builder(this.clientId);
+
+            if (!nonce.isEmpty()) {
+                googleIdOptionBuilder.setNonce(nonce);
+            }
+            if (this.hostedDomain != null && !this.hostedDomain.isEmpty()) {
+                googleIdOptionBuilder.setHostedDomainFilter(this.hostedDomain);
+            }
+
+            requestBuilder.addCredentialOption(googleIdOptionBuilder.build());`;
+  const replacementBlock = `GetGoogleIdOption.Builder googleIdOptionBuilder = new GetGoogleIdOption.Builder()
+                .setServerClientId(this.clientId)
+                .setFilterByAuthorizedAccounts(false)
+                .setAutoSelectEnabled(false);
+
+            if (!nonce.isEmpty()) {
+                googleIdOptionBuilder.setNonce(nonce);
+            }
+            if (this.hostedDomain != null && !this.hostedDomain.isEmpty()) {
+                googleIdOptionBuilder.setHostedDomainFilter(this.hostedDomain);
+            }
+
+            requestBuilder.addCredentialOption(googleIdOptionBuilder.build());`;
+
+  if (googleSource.includes(standardBlock)) {
+    googleSource = googleSource.replace(standardBlock, replacementBlock);
+    fs.writeFileSync(googleProvider, googleSource);
+    console.log("Patched GoogleProvider standard UI for Android 16 reauth handling:", googleProvider);
+  } else {
+    console.log("GoogleProvider Android 16 patch already applied or source changed:", googleProvider);
+  }
+}
+
 const socialLoginGradle = path.join(
   process.cwd(),
   "node_modules",
