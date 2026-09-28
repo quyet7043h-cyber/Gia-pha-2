@@ -598,24 +598,42 @@ export default function Tree() {
             // Tên Thánh (dòng 1) nằm trên tên đầy đủ. Ẩn dòng này
             // hoàn toàn khi người đó chưa khai báo Tên Thánh.
             // Tên đầy đủ (dòng 2) và Tên Thánh dùng cùng màu.
-            const nameTspan = tspans[1];
-            const saintTspan = tspans[0];
+            // Không dựa vào vị trí tĩnh của tspan để tìm Tên Thánh:
+            // family-chart có thể thay đổi số/ thứ tự tspan giữa các bản
+            // render. Xác định dòng tên đầy đủ theo nội dung thực tế rồi
+            // dùng dòng còn lại làm Tên Thánh.
+            const fullNameValue = String(fields["full name"] ?? "").trim();
             const saintValue = String(fields["saint_name"] ?? "").trim();
+            const nameTspan =
+              Array.from(tspans).find(
+                (t) => String(t.textContent ?? "").trim() === fullNameValue,
+              ) ?? tspans[1];
+            const saintTspan =
+              Array.from(tspans).find(
+                (t) => t !== nameTspan && String(t.textContent ?? "").trim() === saintValue,
+              ) ?? tspans[0];
 
             if (saintTspan) {
               saintTspan.textContent = saintValue;
               saintTspan.setAttribute("text-anchor", "start");
               saintTspan.setAttribute("x", "0");
               saintTspan.setAttribute("dy", "0");
-              // Tên Thánh nổi bật: lớn hơn tên thường, in đậm và cùng
-              // màu với họ tên.
               saintTspan.setAttribute("font-size", "12");
               saintTspan.setAttribute("font-weight", "700");
               saintTspan.setAttribute(
                 "fill",
                 nameTspan?.getAttribute("fill") || "#222222",
               );
-              saintTspan.style.display = saintValue ? "" : "none";
+              saintTspan.style.display = saintValue ? "inline" : "none";
+            }
+
+            // Luôn ép tên đầy đủ xuống dòng thứ 2 để Tên Thánh không
+            // bị chồng hoặc bị family-chart đặt lại lên dòng đầu.
+            if (nameTspan) {
+              nameTspan.textContent = fullNameValue;
+              nameTspan.setAttribute("text-anchor", "start");
+              nameTspan.setAttribute("x", "0");
+              nameTspan.setAttribute("dy", saintValue ? "18" : "0");
             }
 
             // Tên đầy đủ (dòng 2): tự thu nhỏ cỡ chữ nếu quá dài để không bị
