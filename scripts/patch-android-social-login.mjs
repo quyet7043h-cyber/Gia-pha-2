@@ -140,6 +140,41 @@ if (fs.existsSync(googleProvider)) {
   console.log("Backported native Google [16] reauth retry:", googleProvider);
 }
 
+
+const manifestPath = path.join(
+  process.cwd(),
+  "android",
+  "app",
+  "src",
+  "main",
+  "AndroidManifest.xml",
+);
+
+if (fs.existsSync(manifestPath)) {
+  let manifest = fs.readFileSync(manifestPath, "utf8");
+
+  if (!manifest.includes('android:scheme="com.giapha.donghoviet"')) {
+    const activityPattern = /(<activity\b[^>]*android:name="[^"]*MainActivity"[^>]*>)/;
+    if (!activityPattern.test(manifest)) {
+      throw new Error("MainActivity entry not found in AndroidManifest.xml");
+    }
+
+    manifest = manifest.replace(
+      activityPattern,
+      `$1
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.giapha.donghoviet" android:host="auth-callback" />
+            </intent-filter>`,
+    );
+
+    fs.writeFileSync(manifestPath, manifest);
+    console.log("Added native OAuth callback intent filter:", manifestPath);
+  }
+}
+
 const socialLoginGradle = path.join(
   process.cwd(),
   "node_modules",
