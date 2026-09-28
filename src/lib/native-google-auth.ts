@@ -141,7 +141,7 @@ export async function signInWithNativeGoogle(): Promise<void> {
     // Android Credential Manager can return [16] when a cached Google
     // account needs re-authentication. Clear the native Google credential
     // state and retry once with the standard account chooser.
-    if (code === "16" || /\\[16\\]\\s*Account reauth failed/i.test(message)) {
+    if (code === "16" || /\[16\]\s*Account reauth failed/i.test(message)) {
       try {
         await socialLogin.logout({ provider: "google" });
       } catch (clearError) {
