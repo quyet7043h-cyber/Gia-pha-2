@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
   },
   personSaintName: {
     // Tên Thánh nổi bật hơn họ tên và dùng cùng màu với họ tên.
-    fontSize: 9,
-    fontWeight: 700,
+    fontSize: 8,
+    fontWeight: 600,
     color: COLORS.primary,
     marginBottom: 1.5,
     textAlign: "center",
@@ -1478,8 +1478,8 @@ function TreeDiagramPage({
   }
   maxSyl = Math.min(maxSyl, 6); // tên quá dài: cắt bớt (… ) ở dòng cuối
 
-  const SAINT_FS = 6;
-  const SAINT_H = 8;
+  const SAINT_FS = 5;
+  const SAINT_H = 7;
   const NAME_FS = 7;
   const YEAR_FS = 5;
   // Giãn dòng giữa các âm tiết cho dễ đọc (thẻ cao thêm chút).
