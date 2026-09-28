@@ -2689,7 +2689,7 @@ export type Database = {
           nickname?: never
           photo_path?: never
           posthumous_name?: never
-          saint_name?: never
+          saint_name?: string | null
         }
         Update: {
           bio?: never
@@ -2724,7 +2724,7 @@ export type Database = {
           nickname?: never
           photo_path?: never
           posthumous_name?: never
-          saint_name?: never
+          saint_name?: string | null
         }
         Relationships: [
           {
