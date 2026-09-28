@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
-import Romcal from "romcal";
+import * as RomcalModule from "romcal";
 import { Vietnam_En } from "@romcal/calendar.vietnam";
 
 type LiturgicalDay = {
@@ -88,6 +88,9 @@ const COLOR_LABEL: Record<string, string> = {
 };
 
 async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
+  const Romcal = (RomcalModule as any).default ?? (RomcalModule as any).Romcal;
+  if (!Romcal) throw new Error("Không tìm thấy thư viện Romcal.");
+
   const romcal = new Romcal({
     localizedCalendar: Vietnam_En as any,
     scope: "gregorian",
