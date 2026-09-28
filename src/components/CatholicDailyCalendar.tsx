@@ -87,14 +87,38 @@ const COLOR_LABEL: Record<string, string> = {
   BLACK: "Đen",
 };
 
+function findVietnameseCalendar(value: unknown, depth = 0): unknown {
+  if (!value || typeof value !== "object" || depth > 4) return undefined;
+
+  const candidate = value as Record<string, unknown>;
+  if (
+    "calendarName" in candidate &&
+    "particularConfig" in candidate &&
+    "inputs" in candidate &&
+    "martyrology" in candidate &&
+    "i18n" in candidate
+  ) {
+    return value;
+  }
+
+  for (const nested of Object.values(candidate)) {
+    const found = findVietnameseCalendar(nested, depth + 1);
+    if (found) return found;
+  }
+
+  return undefined;
+}
+
 async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
+  const namespace = VietnamCalendar as Record<string, unknown>;
   const localizedCalendar =
-    (VietnamCalendar as typeof VietnamCalendar & { Vietnam_Vi?: unknown }).Vietnam_Vi ??
-    (VietnamCalendar as typeof VietnamCalendar & { Vietnam?: unknown }).Vietnam ??
-    (VietnamCalendar as typeof VietnamCalendar & { default?: unknown }).default;
+    namespace.Vietnam_Vi ??
+    namespace.Vietnam ??
+    namespace.default ??
+    findVietnameseCalendar(namespace);
 
   if (!localizedCalendar) {
-    throw new Error("Không tìm thấy lịch Công giáo Việt Nam trong gói Romcal.");
+    throw new Error("Không tìm thấy dữ liệu lịch Công giáo Việt Nam trong gói Romcal.");
   }
 
   const romcal = new Romcal({
