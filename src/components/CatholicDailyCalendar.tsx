@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
 import { Romcal } from "romcal";
-import { Vietnam_Vi } from "@romcal/calendar.vietnam";
+import * as VietnamCalendar from "@romcal/calendar.vietnam";
 
 type LiturgicalDay = {
   key?: string;
@@ -20,12 +20,6 @@ type LiturgicalDay = {
 };
 
 type CalendarMap = Record<string, LiturgicalDay[]>;
-
-type RomcalModule = {
-  Romcal?: new (options?: Record<string, unknown>) => {
-    generateCalendar: (year: number) => Promise<CalendarMap>;
-  };
-};
 
 function isoDate(date: Date) {
   const y = date.getFullYear();
@@ -94,8 +88,17 @@ const COLOR_LABEL: Record<string, string> = {
 };
 
 async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
+  const localizedCalendar =
+    (VietnamCalendar as typeof VietnamCalendar & { Vietnam_Vi?: unknown }).Vietnam_Vi ??
+    (VietnamCalendar as typeof VietnamCalendar & { Vietnam?: unknown }).Vietnam ??
+    (VietnamCalendar as typeof VietnamCalendar & { default?: unknown }).default;
+
+  if (!localizedCalendar) {
+    throw new Error("Không tìm thấy lịch Công giáo Việt Nam trong gói Romcal.");
+  }
+
   const romcal = new Romcal({
-    localizedCalendar: Vietnam_Vi,
+    localizedCalendar,
     scope: "gregorian",
     strictMode: true,
   });
