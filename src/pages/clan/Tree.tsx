@@ -549,6 +549,7 @@ export default function Tree() {
         };
 
         const displayLines: CardDisplayFn[] = [
+          (d) => String((d as DatumNode).data?.["saint_name"] ?? ""),
           (d) => String((d as DatumNode).data?.["full name"] ?? ""),
           (d) => dateLine(d as DatumNode),
         ];
@@ -560,7 +561,7 @@ export default function Tree() {
         // badge "Đời"/thông gia. Tên dài hơn sẽ tự thu nhỏ cỡ chữ trong
         // onCardUpdate nên không bao giờ bị cắt/đè badge.
         const cardW = 248;
-        const cardH = showDeceasedDetails ? 74 : 64;
+        const cardH = showDeceasedDetails ? 84 : 74;
         // 2 nút +/sửa neo sát góc phải-dưới thẻ (mép phải cardW-8, mép
         // dưới cardH-4); mỗi nút tròn r=11 (22px), cách nhau 4px.
         const actAddX = cardW - 56;
@@ -577,7 +578,7 @@ export default function Tree() {
             w: cardW,
             h: showDeceasedDetails ? 74 : 64,
             text_x: 64,
-            text_y: 18,
+            text_y: 14,
             img_w: 50,
             img_h: 50,
             img_x: 8,
@@ -592,9 +593,24 @@ export default function Tree() {
             const tspans = this.querySelectorAll<SVGTSpanElement>(
               ".card-text text tspan",
             );
-            // Tên (dòng 1): tự thu nhỏ cỡ chữ nếu quá dài để không bị
+            // Tên Thánh (dòng 1) nằm trên tên đầy đủ. Ẩn dòng này
+            // hoàn toàn khi người đó chưa khai báo Tên Thánh.
+            const saintTspan = tspans[0];
+            if (saintTspan) {
+              const saintValue = String(fields["saint_name"] ?? "").trim();
+              saintTspan.textContent = saintValue;
+              saintTspan.setAttribute("text-anchor", "start");
+              saintTspan.setAttribute("x", "0");
+              saintTspan.setAttribute("dy", "0");
+              saintTspan.setAttribute("font-size", "11");
+              saintTspan.setAttribute("font-weight", "600");
+              saintTspan.setAttribute("fill", "#7A2E2E");
+              saintTspan.style.display = saintValue ? "" : "none";
+            }
+
+            // Tên đầy đủ (dòng 2): tự thu nhỏ cỡ chữ nếu quá dài để không bị
             // cắt ở mép phải hoặc đè vào badge "Đời"/thông gia ở góc.
-            const nameTspan = tspans[0];
+            const nameTspan = tspans[1];
             if (nameTspan && typeof nameTspan.getComputedTextLength === "function") {
               const genVal = fields["generation"];
               const hasGen = typeof genVal === "number" && genVal > 0;
@@ -621,14 +637,14 @@ export default function Tree() {
                 nameTspan.setAttribute("font-size", String(next));
               }
             }
-            const meta = tspans[1];
+            const meta = tspans[2];
             if (meta) {
               meta.setAttribute("text-anchor", "start");
               meta.setAttribute("x", "0");
               meta.setAttribute("dy", "18");
             }
             // Dòng 3 (giỗ + tuổi thọ) — đặt dưới dòng năm, chữ nhỏ + mờ.
-            const extra = tspans[2];
+            const extra = tspans[3];
             if (extra) {
               extra.setAttribute("text-anchor", "start");
               extra.setAttribute("x", "0");
@@ -656,7 +672,7 @@ export default function Tree() {
                 const tag = document.createElementNS(ns, "g");
                 tag.setAttribute("class", "ghost-clan-tag");
                 const tagW = 10 + clanName.length * 6;
-                const cardH = showDeceasedDetails ? 74 : 64;
+                const cardH = showDeceasedDetails ? 84 : 74;
                 const tagX = cardW - tagW - 6;
                 const tagY = cardH - 20;
                 const bg = document.createElementNS(ns, "rect");
@@ -694,7 +710,7 @@ export default function Tree() {
                 overlay.setAttribute("x", "0");
                 overlay.setAttribute("y", "0");
                 overlay.setAttribute("width", String(cardW));
-                overlay.setAttribute("height", "64");
+                overlay.setAttribute("height", String(cardH));
                 overlay.setAttribute("fill", "transparent");
                 overlay.style.cursor = "pointer";
                 overlay.addEventListener("click", (e) => {
