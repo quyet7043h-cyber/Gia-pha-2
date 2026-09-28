@@ -59,9 +59,45 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T12:00:00`));
 }
 
+
+async function translateToVietnamese(text?: string) {
+  if (!text?.trim()) return text;
+
+  try {
+    const params = new URLSearchParams({ q: text, langpair: "en|vi" });
+    const response = await fetch(
+      "https://api.mymemory.translated.net/get?" + params.toString(),
+    );
+    if (!response.ok) return text;
+
+    const json = (await response.json()) as {
+      responseData?: { translatedText?: string };
+    };
+    return json.responseData?.translatedText?.trim() || text;
+  } catch {
+    return text;
+  }
+}
+
+async function translateCelebration(
+  celebration?: Celebration,
+): Promise<Celebration | undefined> {
+  if (!celebration) return undefined;
+
+  const [name, description, quote] = await Promise.all([
+    translateToVietnamese(celebration.name),
+    translateToVietnamese(celebration.description),
+    translateToVietnamese(celebration.quote),
+  ]);
+
+  return { ...celebration, name, description, quote };
+}
+
 export function CatholicDailyCalendar() {
   const [date, setDate] = useState(() => isoDate(new Date()));
   const [data, setData] = useState<ApiResponse | null>(null);
+  const [translatedCelebration, setTranslatedCelebration] =
+    useState<Celebration | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,12 +116,17 @@ export function CatholicDailyCalendar() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<ApiResponse>;
       })
-      .then((json) => {
-        if (!cancelled) setData(json);
+      .then(async (json) => {
+        if (cancelled) return;
+        setData(json);
+        setTranslatedCelebration(undefined);
+        const translated = await translateCelebration(json.celebration);
+        if (!cancelled) setTranslatedCelebration(translated);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setData(null);
+          setTranslatedCelebration(undefined);
           setError(
             err instanceof Error
               ? "Không tải được lịch Công giáo cho ngày này."
@@ -102,7 +143,7 @@ export function CatholicDailyCalendar() {
     };
   }, [endpoint]);
 
-  const celebration = data?.celebration;
+  const celebration = translatedCelebration ?? data?.celebration;
 
   return (
     <Card>
@@ -194,8 +235,8 @@ export function CatholicDailyCalendar() {
         )}
 
         <p className="mt-3 text-xs text-muted-foreground">
-          Dữ liệu lịch phụng vụ được lấy từ Catholic Readings API. Có thể bổ
-          sung nguồn lịch riêng của từng giáo phận Việt Nam ở bước tiếp theo.
+          Dữ liệu lịch phụng vụ được lấy từ Catholic Readings API; nội dung tiếng
+          Anh được dịch tự động sang tiếng Việt.
         </p>
       </CardContent>
     </Card>
