@@ -595,40 +595,41 @@ export default function Tree() {
             const tspans = this.querySelectorAll<SVGTSpanElement>(
               ".card-text text tspan",
             );
-            // Tên Thánh (dòng 1) nằm trên tên đầy đủ. Ẩn dòng này
-            // hoàn toàn khi người đó chưa khai báo Tên Thánh.
-            // Tên đầy đủ (dòng 2) và Tên Thánh dùng cùng màu.
-            // Không dựa vào vị trí tĩnh của tspan để tìm Tên Thánh:
-            // family-chart có thể thay đổi số/ thứ tự tspan giữa các bản
-            // render. Xác định dòng tên đầy đủ theo nội dung thực tế rồi
-            // dùng dòng còn lại làm Tên Thánh.
             const fullNameValue = String(fields["full name"] ?? "").trim();
             const saintValue = String(fields["saint_name"] ?? "").trim();
             const nameTspan =
               Array.from(tspans).find(
                 (t) => String(t.textContent ?? "").trim() === fullNameValue,
               ) ?? tspans[1];
-            const saintTspan =
-              Array.from(tspans).find(
-                (t) => t !== nameTspan && String(t.textContent ?? "").trim() === saintValue,
-              ) ?? tspans[0];
 
-            if (saintTspan) {
-              saintTspan.textContent = saintValue;
-              saintTspan.setAttribute("text-anchor", "start");
-              saintTspan.setAttribute("x", "0");
-              saintTspan.setAttribute("dy", "0");
-              saintTspan.setAttribute("font-size", "12");
-              saintTspan.setAttribute("font-weight", "700");
-              saintTspan.setAttribute(
-                "fill",
-                nameTspan?.getAttribute("fill") || "#222222",
-              );
-              saintTspan.style.display = saintValue ? "inline" : "none";
+            // family-chart owns the card SVG and can rebuild its tspans.
+            // Render Tên Thánh as a dedicated SVG <text> element so it is
+            // not dependent on the library's tspan ordering. This is also
+            // robust when the saint name is empty or when the card is
+            // re-rendered after zoom/center changes.
+            this.querySelector(".tree-saint-name")?.remove();
+            if (saintValue) {
+              const textEl = this.querySelector(".card-text text");
+              if (textEl) {
+                const ns = "http://www.w3.org/2000/svg";
+                const saintText = document.createElementNS(ns, "tspan");
+                saintText.setAttribute("class", "tree-saint-name");
+                saintText.setAttribute("x", "0");
+                saintText.setAttribute("y", "0");
+                saintText.setAttribute("dy", "0");
+                saintText.setAttribute("text-anchor", "start");
+                saintText.setAttribute("font-size", "12");
+                saintText.setAttribute("font-weight", "700");
+                saintText.setAttribute(
+                  "fill",
+                  nameTspan?.getAttribute("fill") || "#222222",
+                );
+                saintText.textContent = saintValue;
+                textEl.insertBefore(saintText, textEl.firstChild);
+              }
             }
 
-            // Luôn ép tên đầy đủ xuống dòng thứ 2 để Tên Thánh không
-            // bị chồng hoặc bị family-chart đặt lại lên dòng đầu.
+            // Full name is always the line immediately below Tên Thánh.
             if (nameTspan) {
               nameTspan.textContent = fullNameValue;
               nameTspan.setAttribute("text-anchor", "start");
@@ -636,22 +637,21 @@ export default function Tree() {
               nameTspan.setAttribute("dy", saintValue ? "18" : "0");
             }
 
-            // Tên đầy đủ (dòng 2): tự thu nhỏ cỡ chữ nếu quá dài để không bị
-            // cắt ở mép phải hoặc đè vào badge "Đời"/thông gia ở góc.
+            // Full name: shrink it when needed so it never collides with
+            // the generation/in-law badges on the right side of the card.
             if (nameTspan && typeof nameTspan.getComputedTextLength === "function") {
               const genVal = fields["generation"];
               const hasGen = typeof genVal === "number" && genVal > 0;
               const hasInlaw = !!(
                 personId && linkedIdsRef.current.has(personId)
               );
-              // Mép phải vùng tên = trước badge (inlaw nằm trái badge Đời).
               const badgeLeft = hasInlaw
                 ? cardW - 69
                 : hasGen
                   ? cardW - 46
                   : cardW - 8;
-              const avail = badgeLeft - 64 - 4; // text_x=64, chừa 4px
-              nameTspan.removeAttribute("font-size"); // reset trước khi đo
+              const avail = badgeLeft - 64 - 4;
+              nameTspan.removeAttribute("font-size");
               const len = nameTspan.getComputedTextLength();
               if (len > avail && avail > 0) {
                 const cur =
