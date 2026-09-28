@@ -626,11 +626,8 @@ export default function Tree() {
                 saintText.setAttribute("text-anchor", "start");
                 saintText.setAttribute("font-size", "12");
                 saintText.setAttribute("font-weight", "700");
-                const nameColor =
-                  nameTspan && typeof getComputedStyle === "function"
-                    ? getComputedStyle(nameTspan).fill
-                    : nameTspan?.getAttribute("fill") || "#222222";
-                saintText.setAttribute("fill", nameColor || "#222222");
+                // Không đặt màu riêng: Tên Thánh kế thừa đúng màu của
+                // text/tspan tên người, nên dark/light mode luôn đồng bộ.
                 saintText.textContent = saintValue;
                 textEl.insertBefore(saintText, textEl.firstChild);
               }
