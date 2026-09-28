@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
-import { Romcal } from "romcal";
+import Romcal from "romcal";
 import { Vietnam_En } from "@romcal/calendar.vietnam";
 
 type LiturgicalDay = {
