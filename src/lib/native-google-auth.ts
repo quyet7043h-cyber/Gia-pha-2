@@ -116,20 +116,52 @@ export async function signInWithNativeGoogle(): Promise<void> {
   }
 
   let response: Awaited<ReturnType<typeof socialLogin.login>>;
+  const loginOptions = {
+    provider: "google" as const,
+    options: {
+      scopes: ["email", "profile"],
+      nonce: nonceDigest,
+      // Always show the normal account chooser. This avoids silently
+      // selecting a stale Credential Manager account on Android 16.
+      filterByAuthorizedAccounts: false,
+      autoSelectEnabled: false,
+      style: "standard" as const,
+    },
+  };
+
   try {
-    response = await socialLogin.login({
-      provider: "google",
-      options: {
-        scopes: ["email", "profile"],
-        nonce: nonceDigest,
-        filterByAuthorizedAccounts: false,
-      },
-    });
+    response = await socialLogin.login(loginOptions);
   } catch (error) {
-    throw makeDiagnosticError("credential-manager-login", error, {
-      ...diagnosticContext(clientId),
-      nonce: "sha256(rawNonce)",
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : "";
+
+    // Android Credential Manager can return [16] when a cached Google
+    // account needs re-authentication. Clear the native Google credential
+    // state and retry once with the standard account chooser.
+    if (code === "16" || /\\[16\\]\\s*Account reauth failed/i.test(message)) {
+      try {
+        await socialLogin.logout({ provider: "google" });
+      } catch (clearError) {
+        console.warn("[NativeGoogleAuth] Could not clear Google credential state before retry", clearError);
+      }
+
+      try {
+        response = await socialLogin.login(loginOptions);
+      } catch (retryError) {
+        throw makeDiagnosticError("credential-manager-login-retry", retryError, {
+          ...diagnosticContext(clientId),
+          nonce: "sha256(rawNonce)",
+        });
+      }
+    } else {
+      throw makeDiagnosticError("credential-manager-login", error, {
+        ...diagnosticContext(clientId),
+        nonce: "sha256(rawNonce)",
+      });
+    }
   }
 
   const result = response.result as { idToken?: string };
