@@ -602,15 +602,29 @@ export default function Tree() {
               saintTspan.setAttribute("text-anchor", "start");
               saintTspan.setAttribute("x", "0");
               saintTspan.setAttribute("dy", "0");
-              saintTspan.setAttribute("font-size", "11");
-              saintTspan.setAttribute("font-weight", "600");
-              saintTspan.setAttribute("fill", "#7A2E2E");
+              // Tên Thánh nổi bật: lớn hơn tên thường, in đậm và dùng
+              // đúng màu của họ tên để nhìn như một phần trang trọng của tên.
+              saintTspan.setAttribute("font-size", "16");
+              saintTspan.setAttribute("font-weight", "700");
+              const nameColor = nameTspan?.getAttribute("fill") || "#222222";
+              saintTspan.setAttribute("fill", nameColor);
               saintTspan.style.display = saintValue ? "" : "none";
             }
 
             // Tên đầy đủ (dòng 2): tự thu nhỏ cỡ chữ nếu quá dài để không bị
             // cắt ở mép phải hoặc đè vào badge "Đời"/thông gia ở góc.
             const nameTspan = tspans[1];
+            if (nameTspan) {
+              // Giữ Tên Thánh cùng màu với họ tên ngay cả khi family-chart
+              // thay đổi style mặc định của dòng tên.
+              const saintValue = String(fields["saint_name"] ?? "").trim();
+              if (saintValue) {
+                saintTspan?.setAttribute(
+                  "fill",
+                  nameTspan.getAttribute("fill") || "#222222",
+                );
+              }
+            }
             if (nameTspan && typeof nameTspan.getComputedTextLength === "function") {
               const genVal = fields["generation"];
               const hasGen = typeof genVal === "number" && genVal > 0;
