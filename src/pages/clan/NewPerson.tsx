@@ -64,6 +64,7 @@ export default function NewPerson() {
   );
   const [birthPlace, setBirthPlace] = useState("");
   const [burialPlace, setBurialPlace] = useState("");
+  const [saintName, setSaintName] = useState("");
   const [courtesyName, setCourtesyName] = useState("");
   const [nickname, setNickname] = useState("");
   const [posthumousName, setPosthumousName] = useState("");
@@ -113,6 +114,7 @@ export default function NewPerson() {
     );
     setBirthPlace(source.birth_place ?? "");
     setBurialPlace(source.burial_place ?? "");
+    setSaintName(source.saint_name ?? "");
     setCourtesyName(source.courtesy_name ?? "");
     setNickname(source.nickname ?? "");
     setPosthumousName(source.posthumous_name ?? "");
@@ -121,6 +123,7 @@ export default function NewPerson() {
     // hiding prefilled data behind a collapsed section would be
     // misleading.
     if (
+      source.saint_name ||
       source.courtesy_name ||
       source.nickname ||
       source.posthumous_name ||
@@ -162,6 +165,8 @@ export default function NewPerson() {
         death_anniv_lunar_is_leap: anniv.death_anniv_lunar_is_leap,
         birth_place: birthPlace.trim() || null,
         burial_place: burialPlace.trim() || null,
+        saint_name: saintName.trim() || null,
+        saint_name: saintName.trim() || null,
         courtesy_name: courtesyName.trim() || null,
         nickname: nickname.trim() || null,
         posthumous_name: posthumousName.trim() || null,
@@ -181,6 +186,7 @@ export default function NewPerson() {
         // gender at the previous choice — a user batch-entering
         // siblings usually keeps gender steady.
         setFullName("");
+        setSaintName("");
         setCourtesyName("");
         setNickname("");
         setPosthumousName("");
@@ -348,7 +354,7 @@ export default function NewPerson() {
                 </div>
                 <div className="text-sm text-muted-foreground mt-0.5">
                   Bấm để nhập các thông tin tuỳ chọn nếu bạn có:
-                  tên tự, tên húy, tên thụy, ngày mất, nơi sinh,
+                  tên Thánh, tên tự, tên húy, tên thụy, ngày mất, nơi sinh,
                   nơi an táng, tiểu sử. Bỏ qua nếu chưa cần — vẫn
                   lưu được người mới.
                 </div>
@@ -372,6 +378,16 @@ export default function NewPerson() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="saint_name">Tên Thánh</Label>
+                <Input
+                  id="saint_name"
+                  maxLength={100}
+                  value={saintName}
+                  onChange={(e) => setSaintName(e.target.value)}
+                  placeholder="Ví dụ: Giuse, Maria, Phêrô"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="courtesy_name">Tên tự</Label>
                 <Input
