@@ -58,7 +58,9 @@
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/app": "^7.1.0",
-    "@capgo/capacitor-social-login": "^7.20.0"
+    "@capgo/capacitor-social-login": "^7.20.0",
+    "@capacitor/filesystem": "^7.1.4",
+    "@capacitor/share": "^7.0.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
