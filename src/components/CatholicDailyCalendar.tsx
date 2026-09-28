@@ -100,7 +100,6 @@ async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
   const romcal = new Romcal({
     localizedCalendar: localizedCalendar as any,
     scope: "gregorian",
-    strictMode: true,
   });
 
   return romcal.generateCalendar(year);
