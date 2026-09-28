@@ -64,6 +64,7 @@ import { track } from "@/lib/analytics";
 import { getTreeData } from "@/lib/queries/tree";
 import { UpcomingEventRow } from "@/components/UpcomingEventRow";
 import { EventDetailDialog } from "@/components/EventDetailDialog";
+import { CatholicDailyCalendar } from "@/components/CatholicDailyCalendar";
 import {
   computeUpcomingAnniversaries,
   computeUpcomingEvents,
@@ -345,6 +346,8 @@ export default function Events() {
           )}
         </>
       )}
+
+      <CatholicDailyCalendar />
 
       {/* Custom events management */}
       <Card>
