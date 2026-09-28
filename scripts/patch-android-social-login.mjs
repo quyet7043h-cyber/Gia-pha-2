@@ -114,24 +114,24 @@ if (fs.existsSync(googleProvider)) {
   if (!googleSource.includes('private static final String REAUTH_RETRY_FLAG')) {
     googleSource = googleSource.replace(
       'private static final String TOKEN_REQUEST_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";',
-      'private static final String TOKEN_REQUEST_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";\\n    private static final String REAUTH_RETRY_FLAG = "_googleReauthRetry";',
+      'private static final String TOKEN_REQUEST_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";\n    private static final String REAUTH_RETRY_FLAG = "_googleReauthRetry";',
     );
   }
 
   if (!googleSource.includes('private void clearCredentialManagerState(')) {
     const helper = `\n    private void clearCredentialManagerState(CredentialManagerCallback<Void, Exception> handler) {\n        ClearCredentialStateRequest request = new ClearCredentialStateRequest();\n        Executor executor = Executors.newSingleThreadExecutor();\n        credentialManager.clearCredentialStateAsync(\n            request,\n            null,\n            executor,\n            new CredentialManagerCallback<Void, ClearCredentialException>() {\n                @Override\n                public void onResult(Void result) { handler.onResult(null); }\n                @Override\n                public void onError(@NonNull ClearCredentialException e) { handler.onError(e); }\n            }\n        );\n    }\n`;
-    googleSource = googleSource.replace(/\\n    private void rawLogout\\(/, helper + "\\n    private void rawLogout(");
+    googleSource = googleSource.replace(/\n    private void rawLogout\(/, helper + "\n    private void rawLogout(");
   }
 
   if (!googleSource.includes('private boolean isAccountReauthFailed(')) {
     const recovery = `\n    private boolean isAccountReauthFailed(String message) {\n        return message != null && message.contains("Account reauth failed");\n    }\n\n    private boolean isReauthRetry(PluginCall call) {\n        return call.getData().optBoolean(REAUTH_RETRY_FLAG, false);\n    }\n\n    private void markReauthRetry(PluginCall call) {\n        call.getData().put(REAUTH_RETRY_FLAG, true);\n    }\n\n    private void retryLoginAfterReauthFailure(PluginCall call, JSONObject config, JSONObject options) {\n        try {\n            options.put("style", "standard");\n            options.put("filterByAuthorizedAccounts", false);\n            call.getData().put("options", options);\n        } catch (JSONException ex) {\n            call.reject("Google Sign-In failed: " + ex.getMessage());\n            return;\n        }\n        login(call, config);\n    }\n\n    private void handleAccountReauthFailed(GetCredentialException e, PluginCall call, JSONObject config, JSONObject options) {\n        if (isReauthRetry(call)) {\n            call.reject("Google Sign-In failed: [16] Account reauth failed after retry: " + e.getMessage());\n            return;\n        }\n        markReauthRetry(call);\n        Log.w(LOG_TAG, "Account reauth failed; clearing Credential Manager state and retrying standard Google sign-in.");\n        clearCredentialManagerState(new CredentialManagerCallback<Void, Exception>() {\n            @Override\n            public void onResult(Void unused) { retryLoginAfterReauthFailure(call, config, options); }\n            @Override\n            public void onError(@NonNull Exception clearError) {\n                Log.w(LOG_TAG, "Credential Manager state clear failed; retrying sign-in anyway.", clearError);\n                retryLoginAfterReauthFailure(call, config, options);\n            }\n        });\n    }\n`;
-    googleSource = googleSource.replace(/\\n    private void handleSignInError\\(/, recovery + "\\n    private void handleSignInError(");
+    googleSource = googleSource.replace(/\n    private void handleSignInError\(/, recovery + "\n    private void handleSignInError(");
   }
 
   // Insert the [16] branch before the existing NoCredentialException handling.
   if (!googleSource.includes('handleAccountReauthFailed(e, call, config, options);')) {
-    const needle = '        boolean isBottomUi = false;\\n        JSONObject options = call.getObject("options", new JSObject());';
-    const replacement = '        boolean isBottomUi = false;\\n        JSONObject options = call.getObject("options", new JSObject());\\n        if (isAccountReauthFailed(e.getMessage())) {\\n            handleAccountReauthFailed(e, call, config, options);\\n            return;\\n        }';
+    const needle = '        boolean isBottomUi = false;\n        JSONObject options = call.getObject("options", new JSObject());';
+    const replacement = '        boolean isBottomUi = false;\n        JSONObject options = call.getObject("options", new JSObject());\n        if (isAccountReauthFailed(e.getMessage())) {\n            handleAccountReauthFailed(e, call, config, options);\n            return;\n        }';
     if (!googleSource.includes(needle)) throw new Error("handleSignInError insertion marker not found");
     googleSource = googleSource.replace(needle, replacement);
   }
