@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/react";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -9,6 +11,7 @@ import { initPwa } from "./lib/pwa";
 import { persister, queryClient } from "./lib/queryClient";
 import { initSentry } from "./lib/sentry";
 import { initTheme } from "./lib/theme";
+import { supabase } from "./lib/supabase";
 import "./index.css";
 
 // Sentry first — captures any error in subsequent boot steps too.
@@ -16,6 +19,22 @@ initSentry();
 initTheme();
 initPwa();
 initAnalytics();
+
+if (Capacitor.isNativePlatform()) {
+  void CapacitorApp.addListener("appUrlOpen", async ({ url }) => {
+    try {
+      const callback = new URL(url);
+      if (callback.protocol !== "com.giapha.donghoviet:" || callback.host !== "auth-callback") return;
+      const code = callback.searchParams.get("code");
+      const errorDescription = callback.searchParams.get("error_description");
+      if (errorDescription) { console.error("[NativeGoogleAuth] OAuth callback error:", errorDescription); return; }
+      if (!code) return;
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) { console.error("[NativeGoogleAuth] OAuth code exchange failed:", error); return; }
+      window.location.replace("/clans");
+    } catch (error) { console.error("[NativeGoogleAuth] Invalid OAuth callback:", error); }
+  });
+}
 
 // iOS Safari: block pinch-zoom + double-tap-zoom. The viewport meta
 // `user-scalable=no` is ignored on iOS 10+; the only reliable knob
