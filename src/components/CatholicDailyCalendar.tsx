@@ -27,6 +27,42 @@ type RomcalModule = {
   };
 };
 
+function isoDate(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function addDays(value: string, amount: number) {
+  const d = new Date(`${value}T12:00:00`);
+  d.setDate(d.getDate() + amount);
+  return isoDate(d);
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(`${value}T12:00:00`));
+}
+
+function seasonLabel(day?: LiturgicalDay) {
+  const raw = day?.seasonNames?.[0] ?? day?.seasons?.[0];
+  return raw ? SEASON_LABEL[raw] ?? raw : "Phụng vụ";
+}
+
+function typeLabel(day?: LiturgicalDay) {
+  return day?.rankName ?? (day?.rank ? TYPE_LABEL[day.rank] ?? day.rank : undefined);
+}
+
+function colorLabel(day?: LiturgicalDay) {
+  const raw = day?.colors?.[0];
+  return raw ? COLOR_LABEL[raw] ?? raw : undefined;
+}
+
 const SEASON_LABEL: Record<string, string> = {
   ADVENT: "Mùa Vọng",
   CHRISTMASTIDE: "Mùa Giáng Sinh",
