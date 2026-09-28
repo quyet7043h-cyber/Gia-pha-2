@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EnablePushPrompt } from "@/components/EnablePushPrompt";
 import { RecentActivityPanel } from "@/components/RecentActivityPanel";
 import { TodayHubCard } from "@/components/TodayHubCard";
+import { CatholicDailyCalendar } from "@/components/CatholicDailyCalendar";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Button } from "@/components/ui/button";
 import { VideoEmptyState } from "@/components/VideoEmptyState";
@@ -268,6 +269,10 @@ export default function Dashboard() {
 
           {/* Thẻ "Hôm nay" — đổi mỗi ngày (âm lịch, ngày tốt/xấu, giỗ/sinh
               nhật hôm nay, phong tục hôm nay) → tạo lý do mở app hằng ngày. */}
+          {/* Lịch Công giáo — ưu tiên trên Tổng quan */}
+          <CatholicDailyCalendar />
+
+          {/* Lịch hiện tại của gia phả — giữ nguyên */}
           <TodayHubCard clanId={clan.id} todayEvents={todayEvents} />
 
           {/* Sự kiện sắp tới — ưu tiên cao: nhắc giỗ/sinh nhật sắp đến. */}
