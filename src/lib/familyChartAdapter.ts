@@ -20,6 +20,8 @@ export interface F3Datum {
     "first name"?: string;
     "last name"?: string;
     "full name": string;
+    /** Catholic saint name rendered above the full name. */
+    saint_name?: string;
     /** Year of birth (string, 4 digits). */
     birthday?: string;
     /** Year of death (string, 4 digits) — kept separate so onCardUpdate
@@ -188,6 +190,7 @@ export function toFamilyChart(
       data: {
         gender: p.gender,
         "full name": p.full_name,
+        saint_name: p.saint_name?.trim() || undefined,
         birthday: p.birth_date?.slice(0, 4),
         death_year: p.death_date?.slice(0, 4),
         birth_full: formatPartialDate({
