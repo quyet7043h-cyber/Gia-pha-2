@@ -169,6 +169,12 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginBottom: 6,
   },
+  personSaintName: {
+    fontSize: 8,
+    color: COLORS.accent,
+    marginBottom: 1,
+    textAlign: "center",
+  },
   personName: {
     fontSize: 10.5,
     fontWeight: 600,
@@ -1043,6 +1049,9 @@ function renderPersonCard(
         src={photoUri ?? avatarSrc(p.gender)}
         style={styles.avatarImg}
       />
+      {p.saint_name ? (
+        <Text style={styles.personSaintName}>{p.saint_name}</Text>
+      ) : null}
       <Text style={styles.personName}>{p.full_name}</Text>
       {p.is_root && (
         <Text
@@ -1122,6 +1131,9 @@ function renderInLawCard(
         src={photoUri ?? avatarSrc(p.gender)}
         style={styles.avatarImg}
       />
+      {p.saint_name ? (
+        <Text style={styles.personSaintName}>{p.saint_name}</Text>
+      ) : null}
       <Text style={styles.personName}>{p.full_name}</Text>
       <Text style={styles.personMeta}>{metaParts.join(" · ")}</Text>
 
@@ -1456,6 +1468,7 @@ function TreeDiagramPage({
   }
   let maxSyl = 1;
   let maxSylLen = 1;
+  const hasSaintName = rendered.some((p) => !!p.saint_name?.trim());
   for (const p of rendered) {
     const sy = nameSyllables(p.full_name);
     maxSyl = Math.max(maxSyl, sy.length);
@@ -1463,6 +1476,8 @@ function TreeDiagramPage({
   }
   maxSyl = Math.min(maxSyl, 6); // tên quá dài: cắt bớt (… ) ở dòng cuối
 
+  const SAINT_FS = 5.5;
+  const SAINT_H = 8;
   const NAME_FS = 7;
   const YEAR_FS = 5;
   // Giãn dòng giữa các âm tiết cho dễ đọc (thẻ cao thêm chút).
@@ -1472,7 +1487,9 @@ function TreeDiagramPage({
   const CARD_W = Math.round(
     Math.min(34, Math.max(15, maxSylLen * NAME_FS * 0.62 + 5)),
   );
-  const CARD_H = Math.round(PAD_T + maxSyl * LINE_H + YEAR_FS + 2 + PAD_B);
+  const CARD_H = Math.round(
+    PAD_T + (hasSaintName ? SAINT_H : 0) + maxSyl * LINE_H + YEAR_FS + 2 + PAD_B,
+  );
   const MARRIAGE_GAP = 6;
   const SIBLING_GAP = 12;
   const ROW_GAP = 26;
@@ -1740,11 +1757,32 @@ function TreeDiagramPage({
                 strokeWidth={0.5}
                 strokeDasharray={isSpouse ? "1.5 1.5" : undefined}
               />
+              {p.saint_name?.trim() ? (
+                <Text
+                  x={c.cx}
+                  y={c.y + PAD_T + SAINT_FS}
+                  style={{
+                    fontFamily: PDF_FONT_FAMILY,
+                    fontSize: SAINT_FS,
+                    fontWeight: 400,
+                    fill: COLORS.accent,
+                    textAnchor: "middle",
+                  }}
+                >
+                  {p.saint_name.trim()}
+                </Text>
+              ) : null}
               {lines.map((ln, li) => (
                 <Text
                   key={li}
                   x={c.cx}
-                  y={c.y + PAD_T + (li + 1) * LINE_H - 1.8}
+                  y={
+                    c.y +
+                    PAD_T +
+                    (hasSaintName ? SAINT_H : 0) +
+                    (li + 1) * LINE_H -
+                    1.8
+                  }
                   style={{
                     fontFamily: PDF_FONT_FAMILY,
                     fontSize: NAME_FS,
