@@ -214,7 +214,6 @@ export interface CreatePersonInput {
   birth_place?: string | null;
   burial_place?: string | null;
   saint_name?: string | null;
-  saint_name?: string | null;
   courtesy_name?: string | null;
   posthumous_name?: string | null;
   nickname?: string | null;
@@ -365,6 +364,7 @@ export interface UpdatePersonInput {
   bio?: string | null;
   birth_place?: string | null;
   burial_place?: string | null;
+  saint_name?: string | null;
   courtesy_name?: string | null;
   posthumous_name?: string | null;
   nickname?: string | null;
