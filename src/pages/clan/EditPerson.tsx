@@ -233,7 +233,6 @@ export function EditPersonForm({
         birth_place: birthPlace || null,
         burial_place: burialPlace || null,
         saint_name: saintName.trim() || null,
-        saint_name: saintName.trim() || null,
         courtesy_name: courtesyName.trim() || null,
         nickname: nickname.trim() || null,
         posthumous_name: posthumousName.trim() || null,
