@@ -2085,6 +2085,7 @@ export type Database = {
           nickname?: string | null
           photo_path?: string | null
           posthumous_name?: string | null
+          saint_name?: string | null
           search_text?: string | null
           todo_excluded?: boolean
           updated_at?: string
