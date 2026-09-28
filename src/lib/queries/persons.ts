@@ -213,6 +213,8 @@ export interface CreatePersonInput {
   bio?: string | null;
   birth_place?: string | null;
   burial_place?: string | null;
+  saint_name?: string | null;
+  saint_name?: string | null;
   courtesy_name?: string | null;
   posthumous_name?: string | null;
   nickname?: string | null;
@@ -260,6 +262,7 @@ export async function createPerson(
       bio: input.bio ?? null,
       birth_place: input.birth_place ?? null,
       burial_place: input.burial_place ?? null,
+      saint_name: input.saint_name ?? null,
       courtesy_name: input.courtesy_name ?? null,
       posthumous_name: input.posthumous_name ?? null,
       nickname: input.nickname ?? null,
@@ -286,6 +289,7 @@ export async function createPerson(
 
 export interface PersonDetail extends PersonRow {
   clan_id: string;
+  saint_name: string | null;
   courtesy_name: string | null;
   posthumous_name: string | null;
   nickname: string | null;
@@ -310,7 +314,7 @@ export interface PersonDetail extends PersonRow {
 // todo_excluded, no full_name_unaccent). Used when reading on
 // behalf of a non-member of a public clan.
 const DETAIL_COLS_SAFE =
-  "id, clan_id, full_name, gender, is_living, is_root, birth_date, birth_date_precision, death_date, death_date_precision, generation, branch_id, courtesy_name, posthumous_name, nickname, bio, birth_place, burial_place, photo_path, birth_lunar_year, birth_lunar_month, birth_lunar_day, death_lunar_year, death_lunar_month, death_lunar_day, death_anniv_lunar_month, death_anniv_lunar_day, birth_order, lifespan_years";
+  "id, clan_id, full_name, gender, is_living, is_root, birth_date, birth_date_precision, death_date, death_date_precision, generation, branch_id, saint_name, courtesy_name, posthumous_name, nickname, bio, birth_place, burial_place, photo_path, birth_lunar_year, birth_lunar_month, birth_lunar_day, death_lunar_year, death_lunar_month, death_lunar_day, death_anniv_lunar_month, death_anniv_lunar_day, birth_order, lifespan_years";
 // Raw table adds member-only columns (todo_excluded).
 const DETAIL_COLS = `${DETAIL_COLS_SAFE}, todo_excluded`;
 
