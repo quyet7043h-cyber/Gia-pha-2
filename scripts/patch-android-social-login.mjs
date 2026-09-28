@@ -80,10 +80,11 @@ if (!source.includes("handleGoogleLoginIntent(requestCode, data)")) {
 }
 
 
-// Android 16 workaround: force the Google Credential Manager path that uses
-// GetGoogleIdOption with explicit account filtering disabled. Some Android 16
-// devices can return [16] Account reauth failed with GetSignInWithGoogleOption
-// even after CredentialManager.clearCredentialState().
+// Backport the native [16] Account reauth recovery from newer plugin releases.
+// Keep the normal standard Google flow (GetSignInWithGoogleOption), but when
+// Credential Manager returns Account reauth failed, clear credential state and
+// retry once with the standard account picker. This is the Android 16 failure
+// mode we are targeting without changing the Capacitor/plugin major versions.
 const googleProvider = path.join(
   process.cwd(),
   "node_modules",
@@ -103,19 +104,19 @@ const googleProvider = path.join(
 
 if (fs.existsSync(googleProvider)) {
   let googleSource = fs.readFileSync(googleProvider, "utf8");
-  if (!googleSource.includes("import com.google.android.libraries.identity.googleid.GetGoogleIdOption;")) {
-    googleSource = googleSource.replace(
-      "import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;",
-      "import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;\nimport com.google.android.libraries.identity.googleid.GetGoogleIdOption;",
-    );
-  }
+
   const standardBlock = `GetSignInWithGoogleOption.Builder googleIdOptionBuilder = new GetSignInWithGoogleOption.Builder(this.clientId);
 
             if (!nonce.isEmpty()) {
                 googleIdOptionBuilder.setNonce(nonce);
             }
+            if (this.hostedDomain != null && !this.hostedDomain.isEmpty()) {
+                googleIdOptionBuilder.setHostedDomainFilter(this.hostedDomain);
+            }
+
             requestBuilder.addCredentialOption(googleIdOptionBuilder.build());`;
-  const replacementBlock = `GetGoogleIdOption.Builder googleIdOptionBuilder = new GetGoogleIdOption.Builder()
+
+  const android16StandardBlock = `GetGoogleIdOption.Builder googleIdOptionBuilder = new GetGoogleIdOption.Builder()
                 .setServerClientId(this.clientId)
                 .setFilterByAuthorizedAccounts(false)
                 .setAutoSelectEnabled(false);
@@ -129,13 +130,98 @@ if (fs.existsSync(googleProvider)) {
 
             requestBuilder.addCredentialOption(googleIdOptionBuilder.build());`;
 
-  if (googleSource.includes(standardBlock)) {
-    googleSource = googleSource.replace(standardBlock, replacementBlock);
-    fs.writeFileSync(googleProvider, googleSource);
-    console.log("Patched GoogleProvider standard UI for Android 16 reauth handling:", googleProvider);
-  } else {
-    console.log("GoogleProvider Android 16 patch already applied or source changed:", googleProvider);
+  // Revert the previous workaround if it is present: the newer recovery
+  // specifically retries the standard SignInWithGoogle flow after clearing state.
+  if (googleSource.includes(android16StandardBlock)) {
+    googleSource = googleSource.replace(android16StandardBlock, standardBlock);
   }
+
+  const retryMarker = 'private static final String REAUTH_RETRY_FLAG = "_googleReauthRetry";';
+  if (!googleSource.includes(retryMarker)) {
+    googleSource = googleSource.replace(
+      'private static final String TOKEN_REQUEST_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";',
+      'private static final String TOKEN_REQUEST_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo";\\n    ' + retryMarker,
+    );
+  }
+
+  const clearHelper = `\n    private void clearCredentialManagerState(CredentialManagerCallback<Void, Exception> handler) {
+        ClearCredentialStateRequest request = new ClearCredentialStateRequest();
+        Executor executor = Executors.newSingleThreadExecutor();
+        credentialManager.clearCredentialStateAsync(
+            request,
+            null,
+            executor,
+            new CredentialManagerCallback<Void, ClearCredentialException>() {
+                @Override
+                public void onResult(Void result) { handler.onResult(null); }
+                @Override
+                public void onError(@NonNull ClearCredentialException e) { handler.onError(e); }
+            }
+        );
+    }
+`;
+  if (!googleSource.includes('private void clearCredentialManagerState(')) {
+    googleSource = googleSource.replace('    private void rawLogout(', clearHelper + '\\n    private void rawLogout(');
+  }
+
+  const recovery = `\n    private boolean isAccountReauthFailed(String message) {
+        return message != null && message.contains("Account reauth failed");
+    }
+
+    private boolean isReauthRetry(PluginCall call) {
+        return call.getData().optBoolean(REAUTH_RETRY_FLAG, false);
+    }
+
+    private void markReauthRetry(PluginCall call) {
+        call.getData().put(REAUTH_RETRY_FLAG, true);
+    }
+
+    private void retryLoginAfterReauthFailure(PluginCall call, JSONObject config, JSONObject options) {
+        try {
+            options.put("style", "standard");
+            options.put("filterByAuthorizedAccounts", false);
+            call.getData().put("options", options);
+        } catch (JSONException ex) {
+            call.reject("Google Sign-In failed: " + ex.getMessage());
+            return;
+        }
+        login(call, config);
+    }
+
+    private void handleAccountReauthFailed(GetCredentialException e, PluginCall call, JSONObject config, JSONObject options) {
+        String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        if (isReauthRetry(call)) {
+            call.reject("Google Sign-In failed: [16] Account reauth failed after clearing Credential Manager state and retrying. " + errorMessage);
+            return;
+        }
+        Log.w(LOG_TAG, "Account reauth failed; clearing Credential Manager state and retrying standard Google sign-in.");
+        markReauthRetry(call);
+        clearCredentialManagerState(new CredentialManagerCallback<Void, Exception>() {
+            @Override
+            public void onResult(Void unused) {
+                retryLoginAfterReauthFailure(call, config, options);
+            }
+            @Override
+            public void onError(@NonNull Exception clearError) {
+                Log.w(LOG_TAG, "Could not clear Credential Manager state; retrying sign-in anyway.", clearError);
+                retryLoginAfterReauthFailure(call, config, options);
+            }
+        });
+    }
+`;
+  if (!googleSource.includes('private boolean isAccountReauthFailed(')) {
+    googleSource = googleSource.replace('    private void handleSignInError(', recovery + '\\n    private void handleSignInError(');
+  }
+
+  const errorNeedle='    private void handleSignInError(GetCredentialException e, PluginCall call, JSONObject config) {\\n        Log.e(LOG_TAG, "Google Sign-In failed", e);';
+  const errorReplacement='    private void handleSignInError(GetCredentialException e, PluginCall call, JSONObject config) {\\n        String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();\\n        Log.e(LOG_TAG, "Google Sign-In failed", e);\\n        JSONObject optionsForReauth = call.getObject("options", new JSObject());\\n        if (isAccountReauthFailed(errorMessage)) {\\n            handleAccountReauthFailed(e, call, config, optionsForReauth);\\n            return;\\n        }';
+  if (!googleSource.includes('handleAccountReauthFailed(e, call, config, optionsForReauth);')) {
+    if (!googleSource.includes(errorNeedle)) throw new Error('handleSignInError marker not found');
+    googleSource = googleSource.replace(errorNeedle,errorReplacement);
+  }
+
+  fs.writeFileSync(googleProvider, googleSource);
+  console.log("Backported native Google [16] reauth retry:", googleProvider);
 }
 
 const socialLoginGradle = path.join(
