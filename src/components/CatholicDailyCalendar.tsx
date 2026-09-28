@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
 import { Romcal } from "romcal";
-import { Vietnam_Vi } from "@romcal/calendar.vietnam";
+import { Vietnam_En } from "@romcal/calendar.vietnam";
 
 type LiturgicalDay = {
   key?: string;
@@ -89,7 +89,7 @@ const COLOR_LABEL: Record<string, string> = {
 
 async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
   const romcal = new Romcal({
-    localizedCalendar: Vietnam_Vi as any,
+    localizedCalendar: Vietnam_En as any,
     scope: "gregorian",
   });
 
