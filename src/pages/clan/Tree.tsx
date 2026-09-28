@@ -626,10 +626,11 @@ export default function Tree() {
                 saintText.setAttribute("text-anchor", "start");
                 saintText.setAttribute("font-size", "12");
                 saintText.setAttribute("font-weight", "700");
-                saintText.setAttribute(
-                  "fill",
-                  nameTspan?.getAttribute("fill") || "#222222",
-                );
+                const nameColor =
+                  nameTspan && typeof getComputedStyle === "function"
+                    ? getComputedStyle(nameTspan).fill
+                    : nameTspan?.getAttribute("fill") || "#222222";
+                saintText.setAttribute("fill", nameColor || "#222222");
                 saintText.textContent = saintValue;
                 textEl.insertBefore(saintText, textEl.firstChild);
               }
@@ -1002,6 +1003,13 @@ export default function Tree() {
             saintText.setAttribute("text-anchor", "start");
             saintText.setAttribute("font-size", "12");
             saintText.setAttribute("font-weight", "700");
+            const nameTspans = textEl.querySelectorAll<SVGTSpanElement>("tspan");
+            const nameColorTspan = nameTspans[1] ?? nameTspans[0];
+            const nameColor =
+              nameColorTspan && typeof getComputedStyle === "function"
+                ? getComputedStyle(nameColorTspan).fill
+                : nameColorTspan?.getAttribute("fill") || "#222222";
+            saintText.setAttribute("fill", nameColor || "#222222");
             saintText.textContent = saintValue;
             textEl.insertBefore(saintText, textEl.firstChild);
           });
