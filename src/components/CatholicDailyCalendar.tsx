@@ -5,28 +5,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
 
-type Celebration = {
+type LiturgicalDay = {
+  key?: string;
   name?: string;
-  type?: string;
-  quote?: string;
-  description?: string;
+  rank?: string;
+  rankName?: string;
+  colors?: string[];
+  seasonNames?: string[];
+  seasons?: string[];
+  isHolyDayOfObligation?: boolean;
+  isOptional?: boolean;
 };
 
-type ApiResponse = {
-  date: string;
-  season?: string;
-  celebration?: Celebration;
+type CalendarMap = Record<string, LiturgicalDay[]>;
+
+type RomcalModule = {
+  Romcal?: new (options?: Record<string, unknown>) => {
+    generateCalendar: (year: number) => Promise<CalendarMap>;
+  };
 };
 
-const API_BASE =
-  "https://cpbjr.github.io/catholic-readings-api/liturgical-calendar";
+const ROMCAL_VERSION = "3.0.0-dev.125";
 
 const SEASON_LABEL: Record<string, string> = {
-  "Ordinary Time": "Mùa Thường Niên",
-  Lent: "Mùa Chay",
-  Easter: "Mùa Phục Sinh",
-  Advent: "Mùa Vọng",
-  Christmas: "Mùa Giáng Sinh",
+  ADVENT: "Mùa Vọng",
+  CHRISTMASTIDE: "Mùa Giáng Sinh",
+  ORDINARY_TIME: "Mùa Thường Niên",
+  LENT: "Mùa Chay",
+  EASTER_TRIDUUM: "Tam Nhật Vượt Qua",
+  EASTER_TITDE: "Mùa Phục Sinh",
+  EASTER: "Mùa Phục Sinh",
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -35,6 +43,16 @@ const TYPE_LABEL: Record<string, string> = {
   MEMORIAL: "Lễ nhớ",
   OPTIONAL_MEMORIAL: "Lễ nhớ tự do",
   COMMEMORATION: "Kỷ niệm",
+};
+
+const COLOR_LABEL: Record<string, string> = {
+  GREEN: "Xanh lá",
+  WHITE: "Trắng",
+  RED: "Đỏ",
+  PURPLE: "Tím",
+  VIOLET: "Tím",
+  ROSE: "Hồng",
+  BLACK: "Đen",
 };
 
 function isoDate(date: Date) {
@@ -59,78 +77,85 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T12:00:00`));
 }
 
-
-async function translateToVietnamese(text?: string) {
-  if (!text?.trim()) return text;
-
-  try {
-    const params = new URLSearchParams({ q: text, langpair: "en|vi" });
-    const response = await fetch(
-      "https://api.mymemory.translated.net/get?" + params.toString(),
-    );
-    if (!response.ok) return text;
-
-    const json = (await response.json()) as {
-      responseData?: { translatedText?: string };
-    };
-    return json.responseData?.translatedText?.trim() || text;
-  } catch {
-    return text;
-  }
+function seasonLabel(day?: LiturgicalDay) {
+  const raw = day?.seasonNames?.[0] ?? day?.seasons?.[0];
+  if (!raw) return "Phụng vụ";
+  return SEASON_LABEL[raw] ?? raw;
 }
 
-async function translateCelebration(
-  celebration?: Celebration,
-): Promise<Celebration | undefined> {
-  if (!celebration) return undefined;
+function typeLabel(day?: LiturgicalDay) {
+  return day?.rankName ?? (day?.rank ? TYPE_LABEL[day.rank] ?? day.rank : undefined);
+}
 
-  const [name, description, quote] = await Promise.all([
-    translateToVietnamese(celebration.name),
-    translateToVietnamese(celebration.description),
-    translateToVietnamese(celebration.quote),
+function colorLabel(day?: LiturgicalDay) {
+  const raw = day?.colors?.[0];
+  return raw ? COLOR_LABEL[raw] ?? raw : undefined;
+}
+
+async function loadVietnameseCalendar(year: number): Promise<CalendarMap> {
+  // Romcal 3 + lịch riêng cho Việt Nam. Học Giáo Lý cũng đang dùng romcal
+  // 3.0.0-dev.125 cho lịch phụng vụ tiếng Việt.
+  const [romcalModule, vietnamModule] = await Promise.all([
+    import(/* @vite-ignore */ `https://esm.sh/romcal@${ROMCAL_VERSION}`),
+    import(
+      /* @vite-ignore */
+      `https://esm.sh/@romcal/calendar.vietnam@${ROMCAL_VERSION}`
+    ),
   ]);
 
-  return { ...celebration, name, description, quote };
+  const RomcalCtor = (romcalModule as RomcalModule).Romcal;
+  if (!RomcalCtor) {
+    throw new Error("Không tải được Romcal.");
+  }
+
+  const vietnamExports = vietnamModule as Record<string, unknown>;
+  const localizedCalendar =
+    vietnamExports.Vietnam_Vi ??
+    vietnamExports.Vietnam ??
+    Object.values(vietnamExports).find(
+      (value) =>
+        value &&
+        typeof value === "object" &&
+        ("calendar" in value || "locale" in value),
+    );
+
+  if (!localizedCalendar) {
+    throw new Error("Không tải được lịch Công giáo Việt Nam.");
+  }
+
+  const romcal = new RomcalCtor({
+    localizedCalendar,
+    scope: "gregorian",
+    strictMode: true,
+  });
+
+  return romcal.generateCalendar(year);
 }
 
 export function CatholicDailyCalendar() {
   const [date, setDate] = useState(() => isoDate(new Date()));
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [translatedCelebration, setTranslatedCelebration] =
-    useState<Celebration | undefined>();
+  const [calendar, setCalendar] = useState<CalendarMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const endpoint = useMemo(() => {
-    const [year, month, day] = date.split("-");
-    return `${API_BASE}/${year}/${month}-${day}.json`;
-  }, [date]);
+  const year = useMemo(() => Number(date.slice(0, 4)), [date]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    fetch(endpoint)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<ApiResponse>;
-      })
-      .then(async (json) => {
-        if (cancelled) return;
-        setData(json);
-        setTranslatedCelebration(undefined);
-        const translated = await translateCelebration(json.celebration);
-        if (!cancelled) setTranslatedCelebration(translated);
+    loadVietnameseCalendar(year)
+      .then((result) => {
+        if (!cancelled) setCalendar(result);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setData(null);
-          setTranslatedCelebration(undefined);
+          setCalendar(null);
           setError(
             err instanceof Error
-              ? "Không tải được lịch Công giáo cho ngày này."
-              : "Không tải được lịch Công giáo.",
+              ? err.message
+              : "Không tải được lịch Công giáo Việt Nam.",
           );
         }
       })
@@ -141,16 +166,17 @@ export function CatholicDailyCalendar() {
     return () => {
       cancelled = true;
     };
-  }, [endpoint]);
+  }, [year]);
 
-  const celebration = translatedCelebration ?? data?.celebration;
+  const celebrations = calendar?.[date] ?? [];
+  const celebration = celebrations[0];
 
   return (
     <Card>
       <CardHeader className="space-y-3">
         <CardTitle className="flex items-center gap-2">
           <IconCalendar className="h-5 w-5" />
-          Lịch Công giáo theo ngày
+          Lịch Công giáo Việt Nam
         </CardTitle>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -196,47 +222,50 @@ export function CatholicDailyCalendar() {
         <p className="text-sm font-medium capitalize">{formatDate(date)}</p>
 
         {loading ? (
-          <p className="mt-3 text-sm text-muted-foreground">Đang tải lịch…</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Đang tải lịch Công giáo Việt Nam…
+          </p>
         ) : error ? (
           <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
             {error}
           </div>
         ) : celebration ? (
-          <div className="mt-3 space-y-2 rounded-xl border p-4">
+          <div className="mt-3 space-y-3 rounded-xl border p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium">
-                {SEASON_LABEL[data?.season ?? ""] ?? data?.season ?? "Phụng vụ"}
+                {seasonLabel(celebration)}
               </span>
-              {celebration.type && (
+
+              {typeLabel(celebration) && (
                 <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
-                  {TYPE_LABEL[celebration.type] ?? celebration.type}
+                  {typeLabel(celebration)}
+                </span>
+              )}
+
+              {colorLabel(celebration) && (
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                  Màu: {colorLabel(celebration)}
                 </span>
               )}
             </div>
 
             <h3 className="text-lg font-semibold">{celebration.name}</h3>
 
-            {celebration.description && (
-              <p className="text-sm text-muted-foreground">
-                {celebration.description}
-              </p>
-            )}
-
-            {celebration.quote && (
-              <p className="border-l-2 pl-3 text-sm italic text-muted-foreground">
-                {celebration.quote}
+            {celebration.isHolyDayOfObligation && (
+              <p className="text-sm font-medium text-primary">
+                Lễ buộc
               </p>
             )}
           </div>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">
-            Không có dữ liệu lễ mừng cho ngày này.
+            Không có dữ liệu phụng vụ cho ngày này.
           </p>
         )}
 
         <p className="mt-3 text-xs text-muted-foreground">
-          Dữ liệu lịch phụng vụ được lấy từ Catholic Readings API; nội dung tiếng
-          Anh được dịch tự động sang tiếng Việt.
+          Dữ liệu từ Romcal, sử dụng lịch phụng vụ dành cho Việt Nam và tiếng
+          Việt. Đây là lịch tham chiếu; các giáo phận có thể có lễ riêng.
         </p>
       </CardContent>
     </Card>
