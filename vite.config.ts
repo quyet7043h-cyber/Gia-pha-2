@@ -63,6 +63,16 @@ export default defineConfig({
         importScripts: ["/push-handler.js"],
         // Precache the built app shell.
         globPatterns: ["**/*.{js,css,html,svg,png,woff2,webmanifest}"],
+        // Các tính năng nặng đã được lazy-load; không precache chúng.
+        // Nếu precache cả chunk 3D/PDF/gallery thì cài PWA xong vẫn phải
+        // tải/cache hàng trăm KB đến MB dù người dùng chưa mở tính năng.
+        globIgnores: [
+          "**/assets/*Tree3DView-*.js",
+          "**/assets/*Gallery*.js",
+          "**/assets/*gallery*.js",
+          "**/assets/*export*Pdf*.js",
+          "**/assets/*pdf*.js",
+        ],
         // Don't ship Workbox debug files in prod.
         cleanupOutdatedCaches: true,
         // When the user accepts "Cập nhật" in the banner, the new SW
@@ -108,7 +118,7 @@ export default defineConfig({
         // Register the SW in `npm run dev` too so devs can verify
         // install/update flows without a build step. Workbox keeps
         // navigation requests untouched so Vite HMR still works.
-        enabled: true,
+        // Không đăng ký service worker khi chạy Vite dev để tránh cache
         type: "module",
         // Skip the workbox precache glob during dev — the dev-dist
         // dir is empty until first SW rebuild and the noisy "glob
