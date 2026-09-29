@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
-import { Capacitor } from "@capacitor/core";
 
 type LiturgicalDay = { name: string; rank?: string; color?: string; readings?: string };
 type CalendarResponse = { source: string; url: string; text: string; error?: string };
@@ -53,10 +52,11 @@ function parseVietnameseCalendar(text: string, date: string): LiturgicalDay | nu
   return { name: lines.join(" "), rank, color, readings };
 }
 
-const CATHOLIC_CALENDAR_API = "https://gia-pha-2-eddyllgpg-quyet7043h-7614s-projects.vercel.app/api/catholic-calendar";
+const CATHOLIC_CALENDAR_API = "https://gia-pha-2-quyet7043h-7614s-projects.vercel.app/api/catholic-calendar";
 
 function catholicCalendarApiUrl() {
-  // Capacitor Android/iOS runs inside its own WebView origin, so /api/...\n  // would point to the bundled app and return index.html instead of JSON.\n  return Capacitor.isNativePlatform() ? CATHOLIC_CALENDAR_API : "/api/catholic-calendar";
+  // Use the Vercel API directly so both the website and Capacitor APK reach the same JSON endpoint.
+  return CATHOLIC_CALENDAR_API;
 }
 
 export function CatholicDailyCalendar() {
