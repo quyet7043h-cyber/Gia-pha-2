@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconCalendar } from "@/components/icons";
+import { Capacitor } from "@capacitor/core";
 
 type LiturgicalDay = { name: string; rank?: string; color?: string; readings?: string };
 type CalendarResponse = { source: string; url: string; text: string; error?: string };
@@ -52,6 +53,12 @@ function parseVietnameseCalendar(text: string, date: string): LiturgicalDay | nu
   return { name: lines.join(" "), rank, color, readings };
 }
 
+const CATHOLIC_CALENDAR_API = "https://gia-pha-2-eddyllgpg-quyet7043h-7614s-projects.vercel.app/api/catholic-calendar";
+
+function catholicCalendarApiUrl() {
+  // Capacitor Android/iOS runs inside its own WebView origin, so /api/...\n  // would point to the bundled app and return index.html instead of JSON.\n  return Capacitor.isNativePlatform() ? CATHOLIC_CALENDAR_API : "/api/catholic-calendar";
+}
+
 export function CatholicDailyCalendar() {
   const [date, setDate] = useState(() => isoDate(new Date()));
   const [calendarText, setCalendarText] = useState<string | null>(null);
@@ -64,10 +71,24 @@ export function CatholicDailyCalendar() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch("/api/catholic-calendar")
+    fetch(catholicCalendarApiUrl(), { headers: { Accept: "application/json" } })
       .then(async (response) => {
-        const data = (await response.json()) as CalendarResponse;
-        if (!response.ok || data.error) throw new Error(data.error ?? "Không tải được lịch Công giáo.");
+        const contentType = response.headers.get("content-type") ?? "";
+        const raw = await response.text();
+        if (!contentType.toLowerCase().includes("application/json")) {
+          throw new Error(
+            `API lịch Công giáo trả về dữ liệu không phải JSON (HTTP ${response.status}).`,
+          );
+        }
+        let data: CalendarResponse;
+        try {
+          data = JSON.parse(raw) as CalendarResponse;
+        } catch {
+          throw new Error("API lịch Công giáo trả về JSON không hợp lệ.");
+        }
+        if (!response.ok || data.error) {
+          throw new Error(data.error ?? `Không tải được lịch Công giáo (HTTP ${response.status}).`);
+        }
         if (!cancelled) { setCalendarText(data.text); setSourceUrl(data.url); }
       })
       .catch((err: unknown) => {
