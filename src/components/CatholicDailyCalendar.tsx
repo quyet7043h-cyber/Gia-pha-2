@@ -52,7 +52,7 @@ function parseVietnameseCalendar(text: string, date: string): LiturgicalDay | nu
   return { name: lines.join(" "), rank, color, readings };
 }
 
-const CATHOLIC_CALENDAR_API = "https://gia-pha-2-quyet7043h-7614s-projects.vercel.app/api/catholic-calendar";
+const CATHOLIC_CALENDAR_API = "https://gia-pha-2.vercel.app/api/catholic-calendar";
 
 function catholicCalendarApiUrl() {
   // Use the Vercel API directly so both the website and Capacitor APK reach the same JSON endpoint.
