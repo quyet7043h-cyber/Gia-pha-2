@@ -165,6 +165,14 @@ export async function deleteAnnouncement(
   id: string,
   client: Client = defaultClient,
 ): Promise<void> {
-  const { error } = await client.from("announcements").delete().eq("id", id);
+  const { data, error } = await client
+    .from("announcements")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) {
+    throw new Error("Không xoá được tin: bạn không có quyền hoặc tin không còn tồn tại.");
+  }
 }
