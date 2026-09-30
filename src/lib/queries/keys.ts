@@ -65,6 +65,7 @@ export const queryKeys = {
   publicAnnouncements: () => ["public-announcements"] as const,
   clanPosts: (clanId: string) => ["clan-posts", clanId] as const,
   clanPostsPending: (clanId: string) => ["clan-posts-pending", clanId] as const,
+  clanPostsHidden: (clanId: string) => ["clan-posts-hidden", clanId] as const,
   clanPost: (postId: string) => ["clan-post", postId] as const,
   clanPostComments: (postId: string) => ["clan-post-comments", postId] as const,
   clanPostAudit: (postId: string) => ["clan-post-audit", postId] as const,
