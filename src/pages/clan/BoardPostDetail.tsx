@@ -131,6 +131,11 @@ export default function BoardPostDetail() {
                 canEdit={canEdit}
                 isAdmin={isAdmin}
                 onAfter={(action) => {
+                  // Khi xóa từ "Bài đã ẩn", ở lại danh sách để xử lý tiếp bài khác.
+                  if (action === "delete" && isHidden) {
+                    navigate(`/clans/${clanId}/board/hidden`);
+                    return;
+                  }
                   if (action === "reject" || action === "hide" || action === "delete") {
                     navigate(`/clans/${clanId}/board`);
                   }
