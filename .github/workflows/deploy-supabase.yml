@@ -32,6 +32,11 @@ jobs:
             --project-ref "$SUPABASE_PROJECT_ID" \
             --password "$SUPABASE_DB_PASSWORD"
 
+      - name: Verify migration files
+        run: |
+          test -f supabase/migrations/20260930043903_add_clan_post_delete_moderation.sql
+          echo "Migration 20260930043903 is present in this checkout."
+
       - name: Push database migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
