@@ -1,4 +1,5 @@
 name: Build Android APK
+# Rebuild Android APK from every main-branch app change.
 
 on:
   workflow_dispatch:
