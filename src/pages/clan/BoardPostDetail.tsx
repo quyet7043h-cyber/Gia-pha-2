@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import {
   IconCheck,
@@ -14,6 +15,7 @@ import {
   IconMore,
   IconPencil,
   IconSend,
+  IconTrash,
   IconUnlock,
   IconX,
 } from "@/components/icons";
@@ -129,7 +131,7 @@ export default function BoardPostDetail() {
                 canEdit={canEdit}
                 isAdmin={isAdmin}
                 onAfter={(action) => {
-                  if (action === "reject" || action === "hide") {
+                  if (action === "reject" || action === "hide" || action === "delete") {
                     navigate(`/clans/${clanId}/board`);
                   }
                 }}
@@ -232,6 +234,7 @@ function PostActionsMenu({
   const navigate = useNavigate();
   const qc = useQueryClient();
   const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -324,6 +327,21 @@ function PostActionsMenu({
         onClick: () => moderateM.mutate("unhide"),
       });
     }
+    items.push({
+      key: "delete",
+      label: "Xóa bài",
+      icon: <IconTrash className="h-4 w-4" />,
+      destructive: true,
+      onClick: async () => {
+        const ok = await confirm({
+          title: `Xóa "${postId}"?`,
+          description: "Bài viết, bình luận kèm theo và dữ liệu liên quan sẽ bị xóa vĩnh viễn. Không thể khôi phục.",
+          confirmLabel: "Xóa bài",
+          destructive: true,
+        });
+        if (ok) moderateM.mutate("delete");
+      },
+    });
   }
 
   if (items.length === 0) return null;
