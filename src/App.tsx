@@ -35,6 +35,7 @@ const AddSpouse = lazy(() => import("@/pages/clan/AddSpouse"));
 const AiGenerate = lazy(() => import("@/pages/clan/AiGenerate"));
 const Audit = lazy(() => import("@/pages/clan/Audit"));
 const Board = lazy(() => import("@/pages/clan/Board"));
+const BoardHidden = lazy(() => import("@/pages/clan/BoardHidden"));
 const BoardModeration = lazy(() => import("@/pages/clan/BoardModeration"));
 const BoardPostDetail = lazy(() => import("@/pages/clan/BoardPostDetail"));
 const BoardPostEdit = lazy(() => import("@/pages/clan/BoardPostEdit"));
@@ -251,6 +252,7 @@ export default function App() {
           <Route path="board" element={<FeatureGuard feature="board"><Board /></FeatureGuard>} />
           <Route path="board/new" element={<FeatureGuard feature="board"><BoardPostNew /></FeatureGuard>} />
           <Route path="board/moderation" element={<FeatureGuard feature="board"><BoardModeration /></FeatureGuard>} />
+          <Route path="board/hidden" element={<FeatureGuard feature="board"><BoardHidden /></FeatureGuard>} />
           <Route path="board/:postId" element={<FeatureGuard feature="board"><BoardPostDetail /></FeatureGuard>} />
           <Route path="board/:postId/edit" element={<FeatureGuard feature="board"><BoardPostEdit /></FeatureGuard>} />
         </Route>
