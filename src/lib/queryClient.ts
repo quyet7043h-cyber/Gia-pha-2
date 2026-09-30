@@ -16,11 +16,15 @@ import type { PersistedClient, Persister } from "@tanstack/react-query-persist-c
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 60 * 4, // 4 hours
+      // Dữ liệu trên web/app cần ưu tiên dữ liệu mới từ Supabase.
+      // Mỗi lần mở/chuyển sang một trang có query sẽ fetch lại thay vì
+      // giữ dữ liệu cũ nhiều giờ. Cache vẫn được giữ để hiển thị tức thì
+      // trong lúc request mới đang chạy.
+      staleTime: 0,
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: "always",
       retry: 1,
     },
   },
