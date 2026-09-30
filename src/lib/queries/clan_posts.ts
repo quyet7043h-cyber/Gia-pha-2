@@ -14,7 +14,8 @@ export type ClanPostModerateAction =
   | "hide"
   | "unhide"
   | "pin"
-  | "unpin";
+  | "unpin"
+  | "delete";
 
 export interface ClanPost {
   id: string;
@@ -89,6 +90,21 @@ export async function listClanPosts(
  * Queue duyệt cho admin clan — chỉ bài `pending`. Hidden không vào
  * queue (đã từ chối).
  */
+/** Danh sách bài đã ẩn — chỉ admin clan/platform admin có thể đọc qua RLS. */
+export async function listHiddenPosts(
+  clanId: string,
+  client: Client = defaultClient,
+): Promise<ClanPost[]> {
+  const { data, error } = await client
+    .from("clan_posts")
+    .select(POST_COLUMNS)
+    .eq("clan_id", clanId)
+    .eq("status", "hidden")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ClanPost[];
+}
+
 export async function listPendingPosts(
   clanId: string,
   client: Client = defaultClient,
