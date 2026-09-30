@@ -266,6 +266,9 @@ function PostActionsMenu({
       qc.invalidateQueries({
         queryKey: queryKeys.clanPostsPending(clanId),
       });
+      qc.invalidateQueries({
+        queryKey: queryKeys.clanPostsHidden(clanId),
+      });
       toast.success("Đã cập nhật");
       setOpen(false);
       onAfter(action);
@@ -334,7 +337,7 @@ function PostActionsMenu({
       destructive: true,
       onClick: async () => {
         const ok = await confirm({
-          title: `Xóa "${postId}"?`,
+          title: "Xóa bài này?",
           description: "Bài viết, bình luận kèm theo và dữ liệu liên quan sẽ bị xóa vĩnh viễn. Không thể khôi phục.",
           confirmLabel: "Xóa bài",
           destructive: true,
