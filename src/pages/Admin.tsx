@@ -1627,7 +1627,8 @@ function AnnouncementEditor({
   const [expiresAt, setExpiresAt] = useState<string>(
     row?.expires_at ? toLocalInput(row.expires_at) : "",
   );
-  // Tin mới mặc định là Đăng ngay; khi sửa tin cũ giữ nguyên trạng thái hiện tại.\n  const [publishNow, setPublishNow] = useState(row ? false : true);
+  // Tin mới mặc định là Đăng ngay; khi sửa tin cũ giữ nguyên trạng thái hiện tại.
+  const [publishNow, setPublishNow] = useState(row ? false : true);
 
   const saveM = useMutation({
     mutationFn: async () => {
