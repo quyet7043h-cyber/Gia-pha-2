@@ -65,6 +65,14 @@ export default function Board() {
         actionsBelow
         actions={
           <>
+            {admin && (
+              <Link
+                to={`/clans/${clanId}/board/hidden`}
+                className="h-10 inline-flex items-center gap-1.5 rounded-md border border-border px-3 text-sm hover:bg-muted"
+              >
+                👁️ Bài đã ẩn
+              </Link>
+            )}
             {admin && (pendingQ.data?.length ?? 0) > 0 && (
               <Link
                 to={`/clans/${clanId}/board/moderation`}
