@@ -57,6 +57,7 @@ import { QuickAddSheet } from "@/components/QuickAddSheet";
 import { RelationSheet } from "@/components/RelationSheet";
 import { ShareTreeButton } from "@/components/ShareTreeButton";
 import { EditPersonForm } from "@/pages/clan/EditPerson";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { LineageContent } from "@/pages/clan/MyLineage";
 import { track } from "@/lib/analytics";
 import { matchesName } from "@/lib/unaccent";
@@ -1299,7 +1300,10 @@ export default function Tree() {
               {isMember && <MemoryRoomCtaButton clanId={clan.id} />}
               {effectiveRole(clan) !== null && (
                 <>
-                  <ExportBookButton clan={clan} />
+                  <div className="flex items-center gap-2 flex-wrap">
+          <ExportBookButton clan={clan} />
+          <ExportPdfButton clan={clan} variant="outline" size="sm" />
+        </div>
                   <ShareTreeButton clanId={clan.id} clanName={clan.name} />
                 </>
               )}
