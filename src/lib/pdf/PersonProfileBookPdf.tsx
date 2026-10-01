@@ -352,7 +352,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         const noteLines = splitNote(person.bio ?? "");
 
         return (
-          <Page key={person.id} size="A4" style={styles.page} wrap={false}>
+          <Page key={person.id} size="A4" orientation="portrait" style={styles.page} wrap={false}>
             <View style={styles.frame} />
             <Text style={styles.topDots}>................................................................................</Text>
 
