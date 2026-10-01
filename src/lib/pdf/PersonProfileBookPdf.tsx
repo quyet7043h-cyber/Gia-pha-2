@@ -128,7 +128,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         <View style={styles.bottomRow}><Text style={styles.bottomLabel}>Ngày, tháng, năm mất:</Text><Text style={styles.halfField}>{death}</Text><Text style={styles.bottomLabel}>Hưởng thọ / Hưởng dương:</Text><Text style={styles.halfFieldLast}>{lifespan == null ? "" : `${lifespan} tuổi`}</Text></View>
         <View style={styles.row}><Text style={styles.label}>Nơi an táng / Mộ phần hiện nay:</Text><Text style={styles.field}>{person.burial_place ?? ""}</Text></View>
         <Text style={styles.noteTitle}>V. GHI CHÚ / TIỂU SỬ / DẪN ĐỒ KHÁC</Text>
-        {noteLines.length > 0 ? noteLines.map((line, i) => <Text key={i} style={styles.noteLine}>{line}</Text>) : Array.from({ length: 6 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
+        {noteLines.length > 0 ? noteLines.map((line, i) => <Text key={i} style={styles.noteLine}>{line}</Text>) : Array.from({ length: 12 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
       </Page>;
     })}
   </Document>;
