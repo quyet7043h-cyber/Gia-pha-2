@@ -22,6 +22,8 @@ const PHOTO_H = 139;
 
 const styles = StyleSheet.create({
   page: {
+    width: PAGE_W,
+    height: PAGE_H,
     paddingTop: 16,
     paddingBottom: 16,
     paddingHorizontal: PAD,
@@ -350,7 +352,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         const noteLines = splitNote(person.bio ?? "");
 
         return (
-          <Page key={person.id} size={{ width: PAGE_W, height: PAGE_H }} style={styles.page} wrap={false}>
+          <Page key={person.id} size="A4" orientation="portrait" style={styles.page} wrap={false}>
             <View style={styles.frame} />
             <Text style={styles.topDots}>................................................................................</Text>
 
