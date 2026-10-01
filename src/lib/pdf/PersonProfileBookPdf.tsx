@@ -39,9 +39,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.4,
     borderColor: "#111111",
   },
-  topDots: { width: 300, alignSelf: "center", marginTop: 2, marginBottom: 6, textAlign: "center", fontSize: 8, letterSpacing: 1.2 },
+  topDots: { width: 280, alignSelf: "center", marginTop: 2, marginBottom: 7, textAlign: "center", fontSize: 8, letterSpacing: 1.2 },
   headerArea: { position: "relative", minHeight: 0, paddingRight: 125 },
-  row: { flexDirection: "row", alignItems: "flex-end", marginBottom: 2.5 },
+  row: { flexDirection: "row", alignItems: "flex-end", marginBottom: 3 },
   label: { fontSize: 10.5, marginRight: 5 },
   field: { flex: 1, minHeight: 11, borderBottomWidth: 0.55, borderBottomColor: "#777777", borderBottomStyle: "dotted", paddingBottom: 1 },
   shortField: { width: 92, minHeight: 12, borderBottomWidth: 0.55, borderBottomColor: "#777777", borderBottomStyle: "dotted", paddingBottom: 2 },
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   tableRow: { flexDirection: "row", minHeight: 13 },
   headerCell: { backgroundColor: "#F1F1F1", fontWeight: 700, textAlign: "center", justifyContent: "center" },
   cell: { paddingHorizontal: 5, paddingVertical: 1, justifyContent: "center", borderRightWidth: 0.5, borderBottomWidth: 0.5, borderColor: "#888888", fontSize: 8.8 },
-  cStt: { width: 42, textAlign: "center" }, cName: { width: 205 }, cGender: { width: 74, textAlign: "center" }, cBirth: { width: 88, textAlign: "center" }, cNote: { width: 125 },
+  cStt: { width: 34, textAlign: "center" }, cName: { width: 190 }, cGender: { width: 62, textAlign: "center" }, cBirth: { width: 78, textAlign: "center" }, cNote: { width: 95 },
   bottomRow: { flexDirection: "row", alignItems: "flex-end", marginBottom: 4 },
   bottomLabel: { fontSize: 10.5, marginRight: 4 },
   halfField: { flex: 1, minHeight: 10, borderBottomWidth: 0.55, borderBottomColor: "#777777", borderBottomStyle: "dotted", paddingBottom: 2, marginRight: 18 },
@@ -114,13 +114,13 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         <View style={styles.frame} />
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
-          <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Tên thánh:</Text><Text style={styles.mediumField}>{saint}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Tên thánh:</Text><Text style={styles.field}>{saint}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Tên thường gọi:</Text><Text style={styles.field}>{person.nickname ?? ""}</Text></View>
-          <View style={styles.row}><Text style={styles.label}>Đời thứ:</Text><Text style={styles.shortField}>{generation}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Ngày, tháng, năm sinh:</Text><Text style={styles.field}>{birth}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Đời thứ:</Text><Text style={styles.shortField}>{generation}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Ngày, tháng, năm sinh:</Text><Text style={styles.field}>{birth}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Thành tựu sự nghiệp:</Text><Text style={styles.field}>{""}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Vợ/Chồng:</Text><Text style={styles.field}>{spouseText}</Text></View>
-          <View style={styles.row}><Text style={styles.label}>Năm sinh:</Text><Text style={styles.shortField}>{spouses.map((p) => formatDate(p.birth_date)).filter(Boolean).join("; ")}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Quê quán:</Text><Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text></View>
-          <View style={styles.row}><Text style={styles.label}>Cha:</Text><Text style={styles.mediumField}>{father?.full_name ?? ""}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Mẹ:</Text><Text style={styles.field}>{mother?.full_name ?? ""}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Năm sinh:</Text><Text style={styles.field}>{spouses.map((p) => formatDate(p.birth_date)).filter(Boolean).join("; ")}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Quê quán:</Text><Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Cha:</Text><Text style={styles.field}>{father?.full_name ?? ""}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Mẹ:</Text><Text style={styles.field}>{mother?.full_name ?? ""}</Text></View>
           <View style={styles.photoBox}>{photo ? <Image src={photo} style={styles.photo} /> : <Text style={styles.photoHint}>Ảnh{`\n`}3x4 / 4x6{`\n`}{`\n`} (Thêm ảnh tại đây)</Text>}</View>
         </View>
         <Text style={styles.sectionTitle}>THÔNG TIN CÁC CON</Text>
