@@ -560,8 +560,8 @@ function ExportPdfTile({ clan }: { clan: ClanDetail }) {
     setBusy(true);
     setErr(null);
     try {
-      const { downloadClanBookPdf } = await import("@/lib/pdf/exportClanBook");
-      await downloadClanBookPdf(clan, { tree: true, detail: true });
+      const { downloadPersonProfileBookPdf } = await import("@/lib/pdf/exportPersonProfileBook");
+      await downloadPersonProfileBookPdf(clan);
       track("export", { kind: "clan_book_pdf", from: "dashboard" });
     } catch (e) {
       setErr((e as Error).message);
