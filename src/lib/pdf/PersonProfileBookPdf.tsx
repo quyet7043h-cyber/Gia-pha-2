@@ -114,8 +114,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         <View style={styles.frame} />
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
-          <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Tên thánh:</Text><Text style={styles.field}>{saint}</Text></View>
-          <View style={styles.row}><Text style={styles.label}>Tên thường gọi:</Text><Text style={styles.field}>{person.nickname ?? ""}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Tên thánh:</Text><Text style={styles.field}>{saint}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Tên thường gọi:</Text><Text style={styles.field}>{person.nickname ?? ""}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Đời thứ:</Text><Text style={styles.shortField}>{generation}</Text></View>\n          <View style={styles.row}><Text style={styles.label}>Ngày, tháng, năm sinh:</Text><Text style={styles.field}>{birth}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Thành tựu sự nghiệp:</Text><Text style={styles.field}>{""}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Vợ/Chồng:</Text><Text style={styles.field}>{spouseText}</Text></View>
