@@ -26,7 +26,7 @@ export async function downloadPersonProfileBookPdf(
     .replace(/Đ/g, "D")
     .replace(/[^a-zA-Z0-9-_]/g, "_");
   const today = new Date().toISOString().slice(0, 10);
-  const filename = `so-gia-pha_${safe}_${today}.pdf`;
+  const filename = `so-gia-pha_${safe}_${today}_A4-doc.pdf`;
 
   const { Capacitor } = await import("@capacitor/core");
   if (Capacitor.isNativePlatform()) {
