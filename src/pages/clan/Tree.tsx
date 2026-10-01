@@ -1842,8 +1842,12 @@ function ExportBookButton({ clan }: { clan: ClanDetail }) {
     setOpen(false);
     setBusy(true);
     try {
-      const { downloadPersonProfileBookPdf } = await import("@/lib/pdf/exportPersonProfileBook");
-      await downloadPersonProfileBookPdf(clan);
+      const { downloadClanBookPdf } = await import("@/lib/pdf/exportClanBook");
+      await downloadClanBookPdf(clan, {
+        tree: true,
+        detail: true,
+        treePerPage: perPage,
+      });
       track("export", { kind: "clan_book_pdf", from: "tree" });
       toast.success("Đã tải sổ PDF");
     } catch (e) {
