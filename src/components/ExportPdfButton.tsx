@@ -34,7 +34,7 @@ export function ExportPdfButton({ clan, variant = "outline", size }: Props) {
         disabled={m.isPending}
       >
         <IconDownload className="h-4 w-4 mr-1.5" />
-        {m.isPending ? "Đang xuất PDF…" : "Xuất sổ gia phả PDF"}
+        {m.isPending ? "Đang xuất PDF…" : "Xuất hồ sơ từng người PDF"}
       </Button>
       {m.error && (
         <p className="text-xs text-destructive">
