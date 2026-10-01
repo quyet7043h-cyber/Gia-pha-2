@@ -199,6 +199,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
   const childrenByPerson = new Map<string, string[]>();
   const fatherByChild = new Map<string, string>();
   const motherByChild = new Map<string, string>();
+  const familyById = new Map(data.families.map((f) => [f.id, f]));
 
   for (const family of data.families) {
     if (family.husband_id && family.wife_id) {
@@ -207,32 +208,114 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
     }
   }
 
+  // Dùng đúng quy tắc phân nhóm/thứ tự của PDF gia phả cũ:
+  // huyết thống trước, theo đời + thứ tự anh chị em; dâu/rể theo vị trí
+  // của người huyết thống mà họ kết hôn. Không tự sort lại theo tên.
+  const isLineage = (pid: string): boolean => {
+    const p = personById.get(pid);
+    return p?.is_root === true || data.childToFamily[pid] != null;
+  };
+  const bloodline = data.persons.filter((p) => isLineage(p.id));
+  const inLaws = data.persons.filter((p) => !isLineage(p.id));
+
   for (const [childId, familyId] of Object.entries(data.childToFamily)) {
-    const family = data.families.find((f) => f.id === familyId);
+    const family = familyById.get(familyId);
     if (!family) continue;
-    if (family.husband_id) {
-      fatherByChild.set(childId, family.husband_id);
-      push(childrenByPerson, family.husband_id, childId);
-    }
-    if (family.wife_id) {
-      motherByChild.set(childId, family.wife_id);
-      push(childrenByPerson, family.wife_id, childId);
-    }
+    if (family.husband_id) fatherByChild.set(childId, family.husband_id);
+    if (family.wife_id) motherByChild.set(childId, family.wife_id);
+    const parent =
+      family.husband_id && isLineage(family.husband_id)
+        ? family.husband_id
+        : family.wife_id && isLineage(family.wife_id)
+          ? family.wife_id
+          : family.husband_id ?? family.wife_id ?? null;
+    if (parent) push(childrenByPerson, parent, childId);
   }
 
-  // Một người có thể xuất hiện dưới cả cha và mẹ; bảng con chỉ cần một lần.
   for (const ids of childrenByPerson.values()) {
     ids.sort((a, b) => compareChildren(personById.get(a), personById.get(b)));
   }
 
-  const people = [...data.persons].sort((a, b) => {
-    return (
-      (a.generation ?? Number.MAX_SAFE_INTEGER) -
-        (b.generation ?? Number.MAX_SAFE_INTEGER) ||
-      compareChildren(a, b) ||
-      a.full_name.localeCompare(b.full_name, "vi")
-    );
+  const minGen = bloodline.reduce(
+    (m, p) => Math.min(m, p.generation ?? Infinity),
+    Infinity,
+  );
+  const explicitRoots = bloodline.filter((p) => p.is_root);
+  const roots = (
+    explicitRoots.length > 0
+      ? explicitRoots
+      : bloodline.filter((p) => p.generation === minGen)
+  ).sort(compareChildren);
+
+  const sttById = new Map<string, string>();
+  const orderInSiblings = new Map<string, number>();
+  function assignStt(personId: string, prefix: string) {
+    sttById.set(personId, prefix);
+    const kids = (childrenByPerson.get(personId) ?? [])
+      .map((id) => personById.get(id))
+      .filter((p): p is PersonDetail => !!p && p.generation !== null)
+      .sort(compareChildren);
+    kids.forEach((k, i) => {
+      orderInSiblings.set(k.id, i);
+      assignStt(k.id, prefix + "." + (i + 1));
+    });
+  }
+  roots.forEach((r, i) => {
+    orderInSiblings.set(r.id, i);
+    assignStt(r.id, String(i + 1));
   });
+
+  let nextRoot = roots.length;
+  const orphans = bloodline
+    .filter((p) => !sttById.has(p.id))
+    .sort(
+      (a, b) =>
+        (a.generation ?? 0) - (b.generation ?? 0) || compareChildren(a, b),
+    );
+  for (const p of orphans) {
+    if (sttById.has(p.id)) continue;
+    orderInSiblings.set(p.id, nextRoot);
+    assignStt(p.id, String(nextRoot + 1));
+    nextRoot++;
+  }
+
+  const bloodlineSorted = [...bloodline].sort(
+    (a, b) =>
+      (a.generation ?? 0) - (b.generation ?? 0) ||
+      compareStt(sttById.get(a.id) ?? "999999", sttById.get(b.id) ?? "999999"),
+  );
+
+  const bloodlinePosition = new Map(
+    bloodlineSorted.map((p, index) => [p.id, index]),
+  );
+  const inLawsSorted = [...inLaws].sort((a, b) => {
+    const key = (person: PersonDetail) => {
+      const spouseIds = spouseByPerson.get(person.id) ?? [];
+      const positions = spouseIds
+        .map((id) => {
+          const spouse = personById.get(id);
+          if (!spouse) return null;
+          const position = bloodlinePosition.get(spouse.id);
+          return position == null ? null : { spouse, position };
+        })
+        .filter((x): x is { spouse: PersonDetail; position: number } => x !== null);
+      if (positions.length === 0) {
+        return { generation: Number.MAX_SAFE_INTEGER, position: Number.MAX_SAFE_INTEGER };
+      }
+      const first = positions.reduce((best, current) =>
+        current.position < best.position ? current : best,
+      );
+      return {
+        generation: first.spouse.generation ?? Number.MAX_SAFE_INTEGER,
+        position: first.position,
+      };
+    };
+    const ka = key(a);
+    const kb = key(b);
+    return ka.generation - kb.generation || ka.position - kb.position || a.full_name.localeCompare(b.full_name, "vi");
+  });
+
+  const people = [...bloodlineSorted, ...inLawsSorted];
 
   return (
     <Document
@@ -386,6 +469,16 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+function compareStt(a: string, b: string): number {
+  const aa = a.split(".").map((n) => Number(n));
+  const bb = b.split(".").map((n) => Number(n));
+  const len = Math.max(aa.length, bb.length);
+  for (let i = 0; i < len; i++) {
+    const d = (aa[i] ?? Number.MAX_SAFE_INTEGER) - (bb[i] ?? Number.MAX_SAFE_INTEGER);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
 function compareChildren(a?: PersonDetail, b?: PersonDetail): number {
   if (!a || !b) return 0;
   if (a.birth_order != null || b.birth_order != null) {
