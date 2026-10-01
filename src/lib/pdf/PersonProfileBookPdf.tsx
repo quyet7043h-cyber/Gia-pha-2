@@ -24,8 +24,8 @@ const styles = StyleSheet.create({
   page: {
     width: PAGE_W,
     height: PAGE_H,
-    paddingTop: 22,
-    paddingBottom: 22,
+    paddingTop: 16,
+    paddingBottom: 16,
     paddingHorizontal: PAD,
     fontFamily: PDF_FONT_FAMILY,
     fontSize: 10,
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     width: 300,
     alignSelf: "center",
     marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 6,
     textAlign: "center",
     fontSize: 8,
     letterSpacing: 1.2,
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 5,
+    marginBottom: 2.5,
   },
   label: {
     fontSize: 10.5,
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   field: {
     flex: 1,
-    minHeight: 13,
+    minHeight: 11,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   shortField: {
     width: 92,
-    minHeight: 15,
+    minHeight: 12,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   mediumField: {
     width: 155,
-    minHeight: 15,
+    minHeight: 12,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
@@ -113,17 +113,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11.5,
     fontWeight: 700,
-    marginTop: 3,
-    marginBottom: 6,
+    marginTop: 2,
+    marginBottom: 3,
   },
   childrenTable: {
     borderWidth: 0.65,
     borderColor: "#777777",
-    marginBottom: 9,
+    marginBottom: 5,
   },
   tableRow: {
     flexDirection: "row",
-    minHeight: 17,
+    minHeight: 13,
   },
   headerCell: {
     backgroundColor: "#F1F1F1",
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingVertical: 1,
     justifyContent: "center",
     borderRightWidth: 0.5,
     borderBottomWidth: 0.5,
@@ -148,12 +148,12 @@ const styles = StyleSheet.create({
   bottomRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   bottomLabel: { fontSize: 10.5, marginRight: 4 },
   halfField: {
     flex: 1,
-    minHeight: 15,
+    minHeight: 10,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
@@ -171,17 +171,17 @@ const styles = StyleSheet.create({
   noteTitle: {
     fontSize: 11.5,
     fontWeight: 700,
-    marginTop: 5,
-    marginBottom: 4,
+    marginTop: 3,
+    marginBottom: 2,
   },
   noteLine: {
     minHeight: 15,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
-    paddingBottom: 3,
-    marginBottom: 2,
-    fontSize: 8.8,
+    paddingBottom: 1,
+    marginBottom: 1,
+    fontSize: 8,
   },
 });
 
@@ -446,7 +446,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
               ? noteLines.map((line, i) => (
                   <Text key={i} style={styles.noteLine}>{line}</Text>
                 ))
-              : Array.from({ length: 6 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
+              : Array.from({ length: 3 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
           </Page>
         );
       })}
