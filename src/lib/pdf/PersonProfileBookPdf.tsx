@@ -110,7 +110,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const generation = person.generation == null ? "" : String(person.generation);
       const photo = photoByPersonId?.get(person.id);
       const noteLines = splitNote(person.bio ?? "");
-      return <Page key={person.id} size="A4" orientation="landscape" rotate={90} style={styles.page} wrap={false}>
+      return <Page key={person.id} size="A4" orientation="portrait" style={styles.page} wrap={false}>
         <View style={styles.frame} />
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
@@ -137,6 +137,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
 function push(map: Map<string, string[]>, key: string, value: string) { const arr = map.get(key) ?? []; if (!arr.includes(value)) arr.push(value); map.set(key, arr); }
 function unique(values: string[]): string[] { return [...new Set(values)]; }
 function compareStt(a: string, b: string): number { const aa = a.split(".").map((n) => Number(n)); const bb = b.split(".").map((n) => Number(n)); const len = Math.max(aa.length, bb.length); for (let i = 0; i < len; i++) { const d = (aa[i] ?? Number.MAX_SAFE_INTEGER) - (bb[i] ?? Number.MAX_SAFE_INTEGER); if (d !== 0) return d; } return 0; }
-function compareChildren(a?: PersonDetail, b?: PersonDetail): number { if (!a || !b) return 0; if (a.birth_order != null || b.birth_order != null) return (a.birth_order ?? Number.MAX_SAFE_INTEGER) - (b.birth_order ?? Number.MAX_SAFE_INTEGER); return (a.birth_date ?? "9999-99-99").localeCompare(b.birth_date ?? "9999-99-99") || a.full_name.localeCompare(b.full_name, "vi"); }
-function formatDate(date: string | null): string { if (!date) return ""; const [y, m, d] = date.split("-"); return y && m && d ? `${d}/${m}/${y}` : date; }
-function splitNote(text: string): string[] { const clean = text.replace(/\r/g, "").trim(); if (!clean) return []; const words = clean.split(/\s+/); const lines: string[] = []; let current = ""; for (const word of words) { if ((current + " " + word).trim().length > 82) { if (current) lines.push(current); current = word; } else current = `${current} ${word}`.trim(); } if (current) lines.push(current); return lines.slice(0, 8); }
+function compareChildren(a?: PersonDetail, b?: PersonDetail): number { if (!a || !b) return a ? -1 : b ? 1 : 0; return (a.birth_order ?? 999999) - (b.birth_order ?? 999999) || (a.birth_date ?? "9999-99-99").localeCompare(b.birth_date ?? "9999-99-99") || a.full_name.localeCompare(b.full_name, "vi"); }
+function formatDate(value?: string | null): string { if (!value) return ""; const [y, m, d] = value.split("-"); if (!y) return ""; if (!m) return y; if (!d) return `${m}/${y}`; return `${d}/${m}/${y}`; }
+function splitNote(note: string): string[] { const lines = note.split(/\r?\n/).map((line) => line.trim()).filter(Boolean); return lines.slice(0, 8); }
