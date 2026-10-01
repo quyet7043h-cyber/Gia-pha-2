@@ -269,7 +269,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         const lifespan = person.lifespan_years ?? computeLifespanYears(person.birth_date, person.death_date);
         const saint = person.saint_name ? person.saint_name : "";
         const generation = person.generation == null ? "" : String(person.generation);
-        const career = person.bio ?? "";
+        const career = "";
         const photo = photoByPersonId?.get(person.id);
         const noteLines = splitNote(person.bio ?? "");
 
