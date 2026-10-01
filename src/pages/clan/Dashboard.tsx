@@ -379,6 +379,7 @@ export default function Dashboard() {
                   clan book is owner territory, not for non-member
                   public-clan visitors. */}
               {isMember && <PdfActionTile clan={clan} />}
+              {isMember && <PersonProfilePdfActionTile clan={clan} />}
             </div>
           </section>
 
@@ -566,6 +567,48 @@ function ActionTile({
 function PdfActionTile({ clan }: { clan: ClanDetail }) {
   return (
     <ExportPdfTile clan={clan} />
+  );
+}
+
+function PersonProfilePdfActionTile({ clan }: { clan: ClanDetail }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onClick() {
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const { downloadPersonProfileBookPdf } = await import(
+        "@/lib/pdf/exportPersonProfileBook"
+      );
+      await downloadPersonProfileBookPdf(clan);
+      track("export", { kind: "person_profile_book_pdf", from: "dashboard_quick_actions" });
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      title={err ?? "Xuất hồ sơ từng người PDF"}
+      className="group relative flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5 hover:border-primary hover:bg-muted/30 transition-colors disabled:opacity-60 disabled:cursor-wait"
+    >
+      <span
+        className="text-primary shrink-0 [&>svg]:h-5 [&>svg]:w-5"
+        aria-hidden="true"
+      >
+        <IconDownload />
+      </span>
+      <span className="text-sm font-medium leading-tight truncate">
+        {busy ? "Đang xuất…" : "Hồ sơ từng người"}
+      </span>
+    </button>
   );
 }
 
