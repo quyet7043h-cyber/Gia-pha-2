@@ -110,7 +110,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const generation = person.generation == null ? "" : String(person.generation);
       const photo = photoByPersonId?.get(person.id);
       const noteLines = splitNote(person.bio ?? "");
-      return <Page key={person.id} size={[595.28, 841.89]} style={styles.page} wrap={false}>
+      return <Page key={person.id} size={{ width: 595.28, height: 841.89 }} orientation="portrait" style={styles.page} wrap={false}>
         <View style={styles.frame} />
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
