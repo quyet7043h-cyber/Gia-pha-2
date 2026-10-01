@@ -30,6 +30,7 @@ import { RecentActivityPanel } from "@/components/RecentActivityPanel";
 import { TodayHubCard } from "@/components/TodayHubCard";
 import { CatholicDailyCalendar } from "@/components/CatholicDailyCalendar";
 import { RefreshButton } from "@/components/RefreshButton";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
 import { Button } from "@/components/ui/button";
 import { VideoEmptyState } from "@/components/VideoEmptyState";
 import {
@@ -471,6 +472,22 @@ export default function Dashboard() {
 
           {effectiveRole(clan) !== null && (
             <RecentActivityPanel clanId={clan.id} />
+          )}
+
+          {/* Xuất hồ sơ từng người — chức năng mới, đặt riêng bên dưới bộ xuất sổ cũ. */}
+          {isMember && (
+            <section
+              aria-label="Hồ sơ từng người"
+              className="rounded-lg border bg-card p-4 space-y-3"
+            >
+              <div>
+                <h2 className="font-semibold">Hồ sơ từng người</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Mỗi người một trang A4 theo mẫu hồ sơ giấy; thứ tự người giữ nguyên như sổ gia phả cũ.
+                </p>
+              </div>
+              <ExportPdfButton clan={clan} variant="outline" />
+            </section>
           )}
         </>
       ) : null}
