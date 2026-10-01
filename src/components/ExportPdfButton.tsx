@@ -11,16 +11,17 @@ interface Props {
 }
 
 /**
- * Click → fetch full clan data → render React-PDF doc → download.
- *
- * The @react-pdf/renderer bundle is ~1.5MB; we dynamic-import it on
- * click so the initial app payload doesn't carry it.
+ * Xuất sổ gia phả theo mẫu hồ sơ giấy:
+ * mỗi người một trang A4, dữ liệu quan hệ/ảnh được lấy trực tiếp từ
+ * dữ liệu gia phả hiện có.
  */
 export function ExportPdfButton({ clan, variant = "outline", size }: Props) {
   const m = useMutation({
     mutationFn: async () => {
-      const { downloadClanBookPdf } = await import("@/lib/pdf/exportClanBook");
-      return downloadClanBookPdf(clan, { tree: true, detail: true });
+      const { downloadPersonProfileBookPdf } = await import(
+        "@/lib/pdf/exportPersonProfileBook"
+      );
+      return downloadPersonProfileBookPdf(clan);
     },
   });
 
