@@ -22,8 +22,6 @@ const PHOTO_H = 139;
 
 const styles = StyleSheet.create({
   page: {
-    width: PAGE_W,
-    height: PAGE_H,
     paddingTop: 16,
     paddingBottom: 16,
     paddingHorizontal: PAD,
