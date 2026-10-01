@@ -11,7 +11,13 @@ export async function downloadPersonProfileBookPdf(
   const data = await getClanBookData(clan.id);
   const photoByPersonId = await fetchPhotoDataUris(data.persons);
 
-  const rawBlob = await pdf(\n    <PersonProfileBookPdf\n      clan={clan}\n      data={data}\n      photoByPersonId={photoByPersonId}\n    />,\n  ).toBlob();\n  const blob = await forceA4PortraitPdf(rawBlob);
+  const blob = await pdf(
+    <PersonProfileBookPdf
+      clan={clan}
+      data={data}
+      photoByPersonId={photoByPersonId}
+    />,
+  ).toBlob();
 
   const safe = clan.name
     .normalize("NFD")
@@ -102,4 +108,3 @@ function blobToDataUri(blob: Blob): Promise<string> {
     fr.readAsDataURL(blob);
   });
 }
-\n\n/** Normalize the final PDF page dictionaries so PDF viewers cannot inherit a landscape box/rotation. */\nasync function forceA4PortraitPdf(blob: Blob): Promise<Blob> {\n  const bytes = new Uint8Array(await blob.arrayBuffer());\n  let text = "";\n  for (let i = 0; i < bytes.length; i++) text += String.fromCharCode(bytes[i]);\n\n  const a4MediaBox = "/MediaBox [0 0 595.28 841.89]";\n  text = text.replace(/\\/MediaBox\\s*\\[[^\\]]+\\]/g, a4MediaBox);\n  text = text.replace(/\\s*\\/Rotate\\s+-?\\d+/g, "");\n\n  const out = new Uint8Array(text.length);\n  for (let i = 0; i < text.length; i++) out[i] = text.charCodeAt(i) & 0xff;\n  return new Blob([out], { type: "application/pdf" });\n}\n
