@@ -24,8 +24,8 @@ const styles = StyleSheet.create({
   page: {
     width: PAGE_W,
     height: PAGE_H,
-    paddingTop: 28,
-    paddingBottom: 28,
+    paddingTop: 22,
+    paddingBottom: 22,
     paddingHorizontal: PAD,
     fontFamily: PDF_FONT_FAMILY,
     fontSize: 10,
@@ -45,20 +45,20 @@ const styles = StyleSheet.create({
     width: 300,
     alignSelf: "center",
     marginTop: 2,
-    marginBottom: 18,
+    marginBottom: 10,
     textAlign: "center",
     fontSize: 8,
     letterSpacing: 1.2,
   },
   headerArea: {
     position: "relative",
-    minHeight: 270,
+    minHeight: 0,
     paddingRight: 125,
   },
   row: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 8,
+    marginBottom: 5,
   },
   label: {
     fontSize: 10.5,
@@ -66,11 +66,11 @@ const styles = StyleSheet.create({
   },
   field: {
     flex: 1,
-    minHeight: 15,
+    minHeight: 13,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
-    paddingBottom: 2,
+    paddingBottom: 1,
   },
   shortField: {
     width: 92,
@@ -119,11 +119,11 @@ const styles = StyleSheet.create({
   childrenTable: {
     borderWidth: 0.65,
     borderColor: "#777777",
-    marginBottom: 17,
+    marginBottom: 9,
   },
   tableRow: {
     flexDirection: "row",
-    minHeight: 20,
+    minHeight: 17,
   },
   headerCell: {
     backgroundColor: "#F1F1F1",
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     paddingHorizontal: 5,
-    paddingVertical: 3,
+    paddingVertical: 2,
     justifyContent: "center",
     borderRightWidth: 0.5,
     borderBottomWidth: 0.5,
@@ -171,17 +171,17 @@ const styles = StyleSheet.create({
   noteTitle: {
     fontSize: 11.5,
     fontWeight: 700,
-    marginTop: 10,
-    marginBottom: 6,
+    marginTop: 5,
+    marginBottom: 4,
   },
   noteLine: {
-    minHeight: 20,
+    minHeight: 15,
     borderBottomWidth: 0.55,
     borderBottomColor: "#777777",
     borderBottomStyle: "dotted",
     paddingBottom: 3,
-    marginBottom: 3,
-    fontSize: 9.5,
+    marginBottom: 2,
+    fontSize: 8.8,
   },
 });
 
@@ -383,6 +383,11 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
               </View>
 
               <View style={styles.row}>
+                <Text style={styles.label}>Chức vị cao nhất:</Text>
+                <Text style={styles.field}>{""}</Text>
+              </View>
+
+              <View style={styles.row}>
                 <Text style={styles.label}>Vợ/Chồng:</Text>
                 <Text style={styles.field}>{spouseText}</Text>
               </View>
@@ -419,7 +424,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
                 <Text style={[styles.cell, styles.cBirth, styles.headerCell]}>Năm sinh</Text>
                 <Text style={[styles.cell, styles.cNote, styles.headerCell]}>Ghi chú</Text>
               </View>
-              {Array.from({ length: Math.max(5, children.length) }, (_, i) => children[i] ?? null).map((child, i) => (
+              {Array.from({ length: Math.max(4, children.length) }, (_, i) => children[i] ?? null).map((child, i) => (
                 <View style={styles.tableRow} key={`${person.id}-child-${i}`}>
                   <Text style={[styles.cell, styles.cStt]}>{i + 1}</Text>
                   <Text style={[styles.cell, styles.cName]}>{child?.full_name ?? ""}</Text>
@@ -447,7 +452,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
               ? noteLines.map((line, i) => (
                   <Text key={i} style={styles.noteLine}>{line}</Text>
                 ))
-              : Array.from({ length: 8 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
+              : Array.from({ length: 6 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
           </Page>
         );
       })}
