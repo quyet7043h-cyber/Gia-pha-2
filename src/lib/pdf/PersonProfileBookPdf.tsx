@@ -248,7 +248,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
   ).sort(compareChildren);
 
   const sttById = new Map<string, string>();
-  const orderInSiblings = new Map<string, number>();
   function assignStt(personId: string, prefix: string) {
     sttById.set(personId, prefix);
     const kids = (childrenByPerson.get(personId) ?? [])
@@ -256,12 +255,10 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       .filter((p): p is PersonDetail => !!p && p.generation !== null)
       .sort(compareChildren);
     kids.forEach((k, i) => {
-      orderInSiblings.set(k.id, i);
       assignStt(k.id, prefix + "." + (i + 1));
     });
   }
   roots.forEach((r, i) => {
-    orderInSiblings.set(r.id, i);
     assignStt(r.id, String(i + 1));
   });
 
@@ -274,7 +271,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
     );
   for (const p of orphans) {
     if (sttById.has(p.id)) continue;
-    orderInSiblings.set(p.id, nextRoot);
     assignStt(p.id, String(nextRoot + 1));
     nextRoot++;
   }
