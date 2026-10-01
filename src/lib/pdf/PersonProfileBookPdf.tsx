@@ -379,11 +379,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
 
               <View style={styles.row}>
                 <Text style={styles.label}>Thành tựu sự nghiệp:</Text>
-                <Text style={styles.field}>{career}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <Text style={styles.label}>Chức vị cao nhất:</Text>
                 <Text style={styles.field}>{""}</Text>
               </View>
 
