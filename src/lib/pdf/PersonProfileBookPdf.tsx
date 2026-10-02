@@ -220,7 +220,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
     }
   }
 
-  // Một người có thể xuất hiện dưới cả cha và mẹ; bảng con chỉ cần một lần.
   for (const ids of childrenByPerson.values()) {
     ids.sort((a, b) => compareChildren(personById.get(a), personById.get(b)));
   }
@@ -250,8 +249,6 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
           .map((id) => personById.get(id))
           .filter((p): p is PersonDetail => !!p);
 
-        // Cha/Mẹ trong hồ sơ này là cha/mẹ của Vợ/Chồng,
-        // không phải cha/mẹ ruột của người đang lập hồ sơ.
         const spouseFathers = spouses
           .map((spouse) => personById.get(fatherByChild.get(spouse.id) ?? ""))
           .filter((p): p is PersonDetail => !!p);
@@ -273,12 +270,8 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
           .map((p) => p.birth_place)
           .filter(Boolean)
           .join("; ");
-        const spouseFatherText = unique(
-          spouseFathers.map((p) => p.full_name),
-        ).join("; ");
-        const spouseMotherText = unique(
-          spouseMothers.map((p) => p.full_name),
-        ).join("; ");
+        const spouseFatherText = unique(spouseFathers.map((p) => p.full_name)).join("; ");
+        const spouseMotherText = unique(spouseMothers.map((p) => p.full_name)).join("; ");
 
         const birth = formatPartialDate({
           date: person.birth_date,
@@ -307,42 +300,36 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
                 <Text style={[styles.label, { marginLeft: 12 }]}>Tên thánh:</Text>
                 <Text style={styles.mediumField}>{saint}</Text>
               </View>
-
               <View style={styles.row}>
                 <Text style={styles.label}>Tên thường gọi:</Text>
                 <Text style={styles.field}>{person.nickname ?? ""}</Text>
               </View>
-
               <View style={styles.row}>
                 <Text style={styles.label}>Đời thứ:</Text>
                 <Text style={styles.shortField}>{generation}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Ngày, tháng, năm sinh:</Text>
                 <Text style={styles.field}>{birth}</Text>
               </View>
-
               <View style={styles.row}>
                 <Text style={styles.label}>Thành tựu sự nghiệp:</Text>
                 <Text style={styles.field}>{career}</Text>
               </View>
-
               <View style={styles.row}>
                 <Text style={styles.label}>Vợ/Chồng:</Text>
                 <Text style={styles.field}>{spouseText}</Text>
               </View>
-
               <View style={styles.row}>
                 <Text style={styles.label}>Năm sinh:</Text>
                 <Text style={styles.shortField}>{spouseBirthText}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Quê quán:</Text>
                 <Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text>
               </View>
-
-              <View style={[styles.row, { marginBottom: 0 }]}>\n                <Text style={styles.label}>Cha:</Text>
+              <View style={[styles.row, { marginBottom: 0 }] }>
+                <Text style={styles.label}>Cha:</Text>
                 <Text style={styles.mediumField}>{spouseFatherText}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Mẹ:</Text>
                 <Text style={styles.field}>{spouseMotherText}</Text>
               </View>
-
               <View style={styles.photoBox}>
                 {photo ? (
                   <Image src={photo} style={styles.photo} />
@@ -392,11 +379,9 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
             </View>
 
             <Text style={styles.noteTitle}>V. GHI CHÚ / TIỂU SỬ / DẪN ĐỒ KHÁC</Text>
-            {noteLines.length > 0
-              ? noteLines.map((line, i) => (
-                  <Text key={i} style={styles.noteLine}>{line}</Text>
-                ))
-              : Array.from({ length: 8 }, (_, i) => <Text key={i} style={styles.noteLine}> </Text>)}
+            {Array.from({ length: 8 }, (_, i) => (
+              <Text key={i} style={styles.noteLine}>{noteLines[i] ?? " "}</Text>
+            ))}
           </Page>
         );
       })}
