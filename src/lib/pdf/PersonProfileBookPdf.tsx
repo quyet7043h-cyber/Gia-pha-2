@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   headerArea: {
     position: "relative",
-    minHeight: 270,
+    minHeight: 0,
     paddingRight: 125,
   },
   row: {
@@ -337,8 +337,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
                 <Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text>
               </View>
 
-              <View style={styles.row}>
-                <Text style={styles.label}>Cha:</Text>
+              <View style={[styles.row, { marginBottom: 0 }]}>\n                <Text style={styles.label}>Cha:</Text>
                 <Text style={styles.mediumField}>{spouseFatherText}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Mẹ:</Text>
                 <Text style={styles.field}>{spouseMotherText}</Text>
