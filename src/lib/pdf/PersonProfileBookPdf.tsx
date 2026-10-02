@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11.5,
     fontWeight: 700,
-    marginTop: 3,
+    marginTop: 0,
     marginBottom: 6,
   },
   childrenTable: {
