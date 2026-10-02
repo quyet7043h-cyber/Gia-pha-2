@@ -249,15 +249,37 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         const children = childIds
           .map((id) => personById.get(id))
           .filter((p): p is PersonDetail => !!p);
-        const father = personById.get(fatherByChild.get(person.id) ?? "");
-        const mother = personById.get(motherByChild.get(person.id) ?? "");
-        const spouseText = spouses
-          .map((p) => `${p.full_name}${p.birth_date ? ` (${formatDate(p.birth_date)})` : ""}`)
+
+        // Cha/Mẹ trong hồ sơ này là cha/mẹ của Vợ/Chồng,
+        // không phải cha/mẹ ruột của người đang lập hồ sơ.
+        const spouseFathers = spouses
+          .map((spouse) => personById.get(fatherByChild.get(spouse.id) ?? ""))
+          .filter((p): p is PersonDetail => !!p);
+        const spouseMothers = spouses
+          .map((spouse) => personById.get(motherByChild.get(spouse.id) ?? ""))
+          .filter((p): p is PersonDetail => !!p);
+
+        const spouseText = spouses.map((p) => p.full_name).join("; ");
+        const spouseBirthText = spouses
+          .map((p) =>
+            formatPartialDate({
+              date: p.birth_date,
+              precision: p.birth_date_precision ?? null,
+            }),
+          )
+          .filter(Boolean)
           .join("; ");
         const spousePlace = spouses
           .map((p) => p.birth_place)
           .filter(Boolean)
           .join("; ");
+        const spouseFatherText = unique(
+          spouseFathers.map((p) => p.full_name),
+        ).join("; ");
+        const spouseMotherText = unique(
+          spouseMothers.map((p) => p.full_name),
+        ).join("; ");
+
         const birth = formatPartialDate({
           date: person.birth_date,
           precision: person.birth_date_precision ?? null,
@@ -310,16 +332,16 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
 
               <View style={styles.row}>
                 <Text style={styles.label}>Năm sinh:</Text>
-                <Text style={styles.shortField}>{spouses.map((p) => formatDate(p.birth_date)).filter(Boolean).join("; ")}</Text>
+                <Text style={styles.shortField}>{spouseBirthText}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Quê quán:</Text>
                 <Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text>
               </View>
 
               <View style={styles.row}>
                 <Text style={styles.label}>Cha:</Text>
-                <Text style={styles.mediumField}>{father?.full_name ?? ""}</Text>
+                <Text style={styles.mediumField}>{spouseFatherText}</Text>
                 <Text style={[styles.label, { marginLeft: 12 }]}>Mẹ:</Text>
-                <Text style={styles.field}>{mother?.full_name ?? ""}</Text>
+                <Text style={styles.field}>{spouseMotherText}</Text>
               </View>
 
               <View style={styles.photoBox}>
@@ -345,7 +367,14 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
                   <Text style={[styles.cell, styles.cStt]}>{i + 1}</Text>
                   <Text style={[styles.cell, styles.cName]}>{child?.full_name ?? ""}</Text>
                   <Text style={[styles.cell, styles.cGender]}>{child ? (child.gender === "M" ? "Nam" : "Nữ") : ""}</Text>
-                  <Text style={[styles.cell, styles.cBirth]}>{child ? formatDate(child.birth_date) : ""}</Text>
+                  <Text style={[styles.cell, styles.cBirth]}>
+                    {child
+                      ? formatPartialDate({
+                          date: child.birth_date,
+                          precision: child.birth_date_precision ?? null,
+                        })
+                      : ""}
+                  </Text>
                   <Text style={[styles.cell, styles.cNote]}>{child?.birth_order ? `Con thứ ${child.birth_order}` : ""}</Text>
                 </View>
               ))}
@@ -392,12 +421,6 @@ function compareChildren(a?: PersonDetail, b?: PersonDetail): number {
     return (a.birth_order ?? Number.MAX_SAFE_INTEGER) - (b.birth_order ?? Number.MAX_SAFE_INTEGER);
   }
   return (a.birth_date ?? "9999-99-99").localeCompare(b.birth_date ?? "9999-99-99") || a.full_name.localeCompare(b.full_name, "vi");
-}
-
-function formatDate(date: string | null): string {
-  if (!date) return "";
-  const [y, m, d] = date.split("-");
-  return y && m && d ? `${d}/${m}/${y}` : date;
 }
 
 function splitNote(text: string): string[] {
