@@ -95,7 +95,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
           <View style={styles.row}><Text style={styles.label}>Đời thứ:</Text><Text style={styles.shortField}>{generation}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Ngày, tháng, năm sinh:</Text><Text style={styles.field}>{birth}</Text></View>
           <View style={styles.row}><Text style={styles.label}>Thành tựu sự nghiệp:</Text><Text style={styles.field}> </Text></View>
           <View style={styles.row}><Text style={styles.label}>Vợ/Chồng:</Text><Text style={styles.field}>{spouseText}</Text></View>
-          <View style={styles.row}><Text style={styles.label}>Năm sinh:</Text><Text style={styles.shortField}>{spouseBirthText}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Quê quán:</Text><Text style={styles.field}>{spousePlace || person.birth_place || ""}</Text></View>
+          <View style={styles.row}><Text style={styles.label}>Năm sinh:</Text><Text style={styles.shortField}>{spouseBirthText}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Quê quán:</Text><Text style={styles.field}>{spousePlace}</Text></View>
           <View style={[styles.row, { marginBottom: 0 }]}><Text style={styles.label}>Cha:</Text><Text style={styles.mediumField}>{spouseFatherText}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Mẹ:</Text><Text style={styles.field}>{spouseMotherText}</Text></View>
           <View style={styles.photoBox}>{photo ? <Image src={photo} style={styles.photo} /> : <Text style={styles.photoHint}>Ảnh{`\n`}3x4 / 4x6{`\n`}{`\n`} (Thêm ảnh tại đây)</Text>}</View>
         </View>
