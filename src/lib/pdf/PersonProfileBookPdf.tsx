@@ -80,7 +80,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const spouseMotherText = unique(spouseMothers.map((p) => p.full_name)).join("; ");
       const birth = formatPartialDate({ date: person.birth_date, precision: person.birth_date_precision ?? null });
       const death = formatPartialDate({ date: person.death_date, precision: person.death_date_precision ?? null });
-      const lifespan = person.lifespan_years ?? computeLifespanYears(person.birth_date, person.death_date);
+      const birthYear = getFullYear(person.birth_date, person.birth_date_precision ?? null);\n      const deathYear = getFullYear(person.death_date, person.death_date_precision ?? null);\n      const lifespan = birthYear != null && deathYear != null ? Math.max(0, deathYear - birthYear) : null;
       const saint = person.saint_name ? person.saint_name : "";
       const generation = person.generation == null ? "" : String(person.generation);
       const photo = photoByPersonId?.get(person.id);
