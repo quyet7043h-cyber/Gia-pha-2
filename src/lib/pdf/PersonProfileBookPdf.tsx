@@ -10,7 +10,6 @@ import {
 import type { ClanBookData } from "@/lib/queries/clan-book";
 import type { ClanDetail } from "@/lib/queries/clan-detail";
 import type { PersonDetail } from "@/lib/queries/persons";
-import { computeLifespanYears } from "@/lib/lifespan";
 import { formatPartialDate } from "@/lib/partialDate";
 import { ensurePdfFontRegistered, PDF_FONT_FAMILY } from "./registerFont";
 
@@ -80,7 +79,9 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const spouseMotherText = unique(spouseMothers.map((p) => p.full_name)).join("; ");
       const birth = formatPartialDate({ date: person.birth_date, precision: person.birth_date_precision ?? null });
       const death = formatPartialDate({ date: person.death_date, precision: person.death_date_precision ?? null });
-      const birthYear = getFullYear(person.birth_date, person.birth_date_precision ?? null);\n      const deathYear = getFullYear(person.death_date, person.death_date_precision ?? null);\n      const lifespan = birthYear != null && deathYear != null ? Math.max(0, deathYear - birthYear) : null;
+      const birthYear = getFullYear(person.birth_date, person.birth_date_precision ?? null);
+      const deathYear = getFullYear(person.death_date, person.death_date_precision ?? null);
+      const lifespan = birthYear != null && deathYear != null ? Math.max(0, deathYear - birthYear) : null;
       const saint = person.saint_name ? person.saint_name : "";
       const generation = person.generation == null ? "" : String(person.generation);
       const photo = photoByPersonId?.get(person.id);
@@ -117,3 +118,8 @@ function push(map: Map<string, string[]>, key: string, value: string) { const ar
 function unique(values: string[]): string[] { return [...new Set(values)]; }
 function compareChildren(a?: PersonDetail, b?: PersonDetail): number { if (!a || !b) return 0; if ((a.birth_order ?? 9999) !== (b.birth_order ?? 9999)) return (a.birth_order ?? 9999) - (b.birth_order ?? 9999); const ad = a.birth_date ?? ""; const bd = b.birth_date ?? ""; return ad.localeCompare(bd); }
 function splitNote(value: string): string[] { return value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 8); }
+function getFullYear(date: string | null, precision: string | null): number | null {
+  if (!date || precision !== "year") return null;
+  const match = /^(\d{4})/.exec(date);
+  return match ? Number(match[1]) : null;
+}
