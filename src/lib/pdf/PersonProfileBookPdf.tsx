@@ -21,7 +21,7 @@ const PHOTO_H = 139;
 
 const styles = StyleSheet.create({
   page: { width: PAGE_W, height: PAGE_H, paddingTop: 28, paddingBottom: 28, paddingHorizontal: PAD, fontFamily: PDF_FONT_FAMILY, fontSize: 10, color: "#111111", backgroundColor: "#FFFFFF" },
-  frame: { position: "absolute", left: 18, top: 7, width: PAGE_W - 36, height: PAGE_H - 14, borderWidth: 1.4, borderColor: "#111111" },
+  frame: { position: "absolute", left: 18, top: 7, width: PAGE_W - 36, height: PAGE_H - 21, borderWidth: 1.4, borderColor: "#111111" },
   topDots: { width: 300, alignSelf: "center", marginTop: 2, marginBottom: 18, textAlign: "center", fontSize: 8, letterSpacing: 1.2 },
   headerArea: { position: "relative", minHeight: 0, paddingRight: 125 },
   row: { flexDirection: "row", alignItems: "flex-end", marginBottom: 8 },
@@ -79,9 +79,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const spouseMotherText = unique(spouseMothers.map((p) => p.full_name)).join("; ");
       const birth = formatPartialDate({ date: person.birth_date, precision: person.birth_date_precision ?? null });
       const death = formatPartialDate({ date: person.death_date, precision: person.death_date_precision ?? null });
-      const birthYear = getFullYear(person.birth_date);
-      const deathYear = getFullYear(person.death_date);
-      const lifespan = birthYear != null && deathYear != null ? Math.max(0, deathYear - birthYear) : null;
+      const lifespan = person.lifespan_years ?? "";
       const saint = person.saint_name ? person.saint_name : "";
       const generation = person.generation == null ? "" : String(person.generation);
       const photo = photoByPersonId?.get(person.id);
@@ -105,7 +103,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
           <View style={styles.tableRow}><Text style={[styles.cell, styles.cStt, styles.headerCell]}>STT</Text><Text style={[styles.cell, styles.cName, styles.headerCell]}>Họ và tên con</Text><Text style={[styles.cell, styles.cGender, styles.headerCell]}>Nam / Nữ</Text><Text style={[styles.cell, styles.cBirth, styles.headerCell]}>Năm sinh</Text><Text style={[styles.cell, styles.cNote, styles.headerCell]}>Ghi chú</Text></View>
           {Array.from({ length: Math.max(5, children.length) }, (_, i) => children[i] ?? null).map((child, i) => <View style={styles.tableRow} key={`${person.id}-child-${i}`}><Text style={[styles.cell, styles.cStt]}>{i + 1}</Text><Text style={[styles.cell, styles.cName]}>{child?.full_name ?? ""}</Text><Text style={[styles.cell, styles.cGender]}>{child ? (child.gender === "M" ? "Nam" : "Nữ") : ""}</Text><Text style={[styles.cell, styles.cBirth]}>{child ? formatPartialDate({ date: child.birth_date, precision: child.birth_date_precision ?? null }) : ""}</Text><Text style={[styles.cell, styles.cNote]}>{child?.birth_order ? `Con thứ ${child.birth_order}` : ""}</Text></View>)}
         </View>
-        <View style={styles.bottomRow}><Text style={styles.bottomLabel}>Ngày, tháng, năm mất:</Text><Text style={styles.halfField}>{death}</Text><Text style={styles.bottomLabel}>Hưởng thọ / Hưởng dương:</Text><Text style={styles.halfFieldLast}>{lifespan == null ? "" : `${lifespan} tuổi`}</Text></View>
+        <View style={styles.bottomRow}><Text style={styles.bottomLabel}>Ngày, tháng, năm mất:</Text><Text style={styles.halfField}>{death}</Text><Text style={styles.bottomLabel}>Hưởng thọ / Hưởng dương:</Text><Text style={styles.halfFieldLast}>{lifespan ? `${lifespan} tuổi` : ""}</Text></View>
         <View style={styles.row}><Text style={styles.label}>Nơi an táng / Mộ phần hiện nay:</Text><Text style={styles.field}>{person.burial_place ?? ""}</Text></View>
         <Text style={styles.noteTitle}>V. GHI CHÚ / TIỂU SỬ / DẪN ĐỒ KHÁC</Text>
         {Array.from({ length: 8 }, (_, i) => <Text key={i} style={styles.noteLine}>{noteLines[i] ?? " "}</Text>)}
@@ -118,8 +116,3 @@ function push(map: Map<string, string[]>, key: string, value: string) { const ar
 function unique(values: string[]): string[] { return [...new Set(values)]; }
 function compareChildren(a?: PersonDetail, b?: PersonDetail): number { if (!a || !b) return 0; if ((a.birth_order ?? 9999) !== (b.birth_order ?? 9999)) return (a.birth_order ?? 9999) - (b.birth_order ?? 9999); const ad = a.birth_date ?? ""; const bd = b.birth_date ?? ""; return ad.localeCompare(bd); }
 function splitNote(value: string): string[] { return value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 8); }
-function getFullYear(date: string | null): number | null {
-  if (!date) return null;
-  const match = /^(\d{4})/.exec(date);
-  return match ? Number(match[1]) : null;
-}
