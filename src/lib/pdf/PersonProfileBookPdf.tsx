@@ -21,7 +21,10 @@ const PHOTO_H = 139;
 
 const styles = StyleSheet.create({
   page: { width: PAGE_W, height: PAGE_H, paddingTop: 28, paddingBottom: 28, paddingHorizontal: PAD, fontFamily: PDF_FONT_FAMILY, fontSize: 10, color: "#111111", backgroundColor: "#FFFFFF" },
-  frame: { position: "absolute", left: 18, top: 7, width: PAGE_W - 36, height: PAGE_H - 21, borderWidth: 1.4, borderColor: "#111111" },
+  frameTop: { position: "absolute", left: 18, top: 7, width: PAGE_W - 36, height: 1.4, backgroundColor: "#111111" },
+  frameBottom: { position: "absolute", left: 18, top: PAGE_H - 8.4, width: PAGE_W - 36, height: 1.4, backgroundColor: "#111111" },
+  frameLeft: { position: "absolute", left: 18, top: 7, width: 1.4, height: PAGE_H - 14, backgroundColor: "#111111" },
+  frameRight: { position: "absolute", left: PAGE_W - 19.4, top: 7, width: 1.4, height: PAGE_H - 14, backgroundColor: "#111111" },
   topDots: { width: 300, alignSelf: "center", marginTop: 2, marginBottom: 18, textAlign: "center", fontSize: 8, letterSpacing: 1.2 },
   headerArea: { position: "relative", minHeight: 0, paddingRight: 125 },
   row: { flexDirection: "row", alignItems: "flex-end", marginBottom: 8 },
@@ -86,7 +89,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const noteLines = splitNote(person.bio ?? "");
 
       return <Page key={person.id} size="A4" style={styles.page} wrap={false}>
-        <View style={styles.frame} />
+        <><View style={styles.frameTop} /><View style={styles.frameBottom} /><View style={styles.frameLeft} /><View style={styles.frameRight} /></>
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
           <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Tên thánh:</Text><Text style={styles.mediumField}>{saint}</Text></View>
