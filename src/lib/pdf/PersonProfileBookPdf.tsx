@@ -92,7 +92,9 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
 
       return <Page key={person.id} size="A4" style={styles.page} wrap={false}>
         <View style={styles.frameTop} />
-        <View style={styles.contentFrame}>
+        <View style={styles.frameLeft} />
+        <View style={styles.frameRight} />
+        <View style={{ marginHorizontal: 0 }}>
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
           <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Tên thánh:</Text><Text style={styles.mediumField}>{saint}</Text></View>
@@ -113,7 +115,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         <View style={styles.row}><Text style={styles.label}>Nơi an táng / Mộ phần hiện nay:</Text><Text style={styles.field}>{person.burial_place ?? ""}</Text></View>
         <Text style={styles.noteTitle}>V. GHI CHÚ / TIỂU SỬ / DẪN ĐỒ KHÁC</Text>
         {Array.from({ length: 8 }, (_, i) => <Text key={i} style={styles.noteLine}>{noteLines[i] ?? " "}</Text>)}
-        <View style={styles.bottomFrameAfterNotes} />
+        <View style={styles.frameBottom} />
         </View>
       </Page>;
     })}
