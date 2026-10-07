@@ -22,9 +22,10 @@ const PHOTO_H = 139;
 const styles = StyleSheet.create({
   page: { width: PAGE_W, height: PAGE_H, paddingTop: 28, paddingBottom: 28, paddingHorizontal: PAD, fontFamily: PDF_FONT_FAMILY, fontSize: 10, color: "#111111", backgroundColor: "#FFFFFF" },
   frameTop: { position: "absolute", left: 18, top: 7, width: PAGE_W - 36, height: 1.4, backgroundColor: "#111111" },
-  frameBottom: { position: "absolute", left: 18, top: PAGE_H - 22, width: PAGE_W - 36, height: 1.6, backgroundColor: "#111111" },
-  frameLeft: { position: "absolute", left: 18, top: 7, width: 1.6, height: PAGE_H - 29, backgroundColor: "#111111" },
-  frameRight: { position: "absolute", left: PAGE_W - 19.6, top: 7, width: 1.6, height: PAGE_H - 29, backgroundColor: "#111111" },
+  frameBottom: { width: PAGE_W - 36, height: 1.6, marginLeft: -12, backgroundColor: "#111111" },
+  frameLeft: { position: "absolute", left: 18, top: 7, width: 1.6, height: "auto", backgroundColor: "#111111" },
+  frameRight: { position: "absolute", right: 18, top: 7, width: 1.6, height: "auto", backgroundColor: "#111111" },
+  contentFrame: { marginLeft: -12, marginRight: -12, borderLeftWidth: 1.6, borderRightWidth: 1.6, borderColor: "#111111" },
   bottomFrameAfterNotes: { width: PAGE_W - 36, height: 1.6, marginLeft: -12, backgroundColor: "#111111" },
   topDots: { width: 300, alignSelf: "center", marginTop: 2, marginBottom: 18, textAlign: "center", fontSize: 8, letterSpacing: 1.2 },
   headerArea: { position: "relative", minHeight: 0, paddingRight: 125 },
@@ -91,9 +92,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
 
       return <Page key={person.id} size="A4" style={styles.page} wrap={false}>
         <View style={styles.frameTop} />
-        <View style={styles.frameBottom} />
-        <View style={styles.frameLeft} />
-        <View style={styles.frameRight} />
+        <View style={styles.contentFrame}>
         <Text style={styles.topDots}>................................................................................</Text>
         <View style={styles.headerArea}>
           <View style={styles.row}><Text style={styles.label}>Họ và tên:</Text><Text style={styles.field}>{person.full_name}</Text><Text style={[styles.label, { marginLeft: 12 }]}>Tên thánh:</Text><Text style={styles.mediumField}>{saint}</Text></View>
@@ -115,6 +114,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
         <Text style={styles.noteTitle}>V. GHI CHÚ / TIỂU SỬ / DẪN ĐỒ KHÁC</Text>
         {Array.from({ length: 8 }, (_, i) => <Text key={i} style={styles.noteLine}>{noteLines[i] ?? " "}</Text>)}
         <View style={styles.bottomFrameAfterNotes} />
+        </View>
       </Page>;
     })}
   </Document>;
