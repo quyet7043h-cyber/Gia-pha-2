@@ -67,6 +67,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
   const people = [...data.persons].sort((a, b) => (a.generation ?? Number.MAX_SAFE_INTEGER) - (b.generation ?? Number.MAX_SAFE_INTEGER) || compareChildren(a, b) || a.full_name.localeCompare(b.full_name, "vi"));
   const rootPerson = data.persons.find((person) => person.is_root);
   const rootGeneration = rootPerson?.generation ?? 1;
+  const rootSpouseIds = new Set(rootPerson ? spouseByPerson.get(rootPerson.id) ?? [] : []);
 
   return <Document title={`Sổ gia phả - ${clan.name}`} author="Dòng Họ Việt" subject="Hồ sơ từng người trong sổ gia phả">
     {people.map((person) => {
@@ -83,7 +84,7 @@ export function PersonProfileBookPdf({ clan, data, photoByPersonId }: Props) {
       const death = formatPartialDate({ date: person.death_date, precision: person.death_date_precision ?? null });
       const lifespan = person.lifespan_years ?? "";
       const saint = person.saint_name ? person.saint_name : "";
-      const generation = person.is_root ? "Thủy tổ" : person.generation == null ? "" : String(Math.max(1, person.generation - rootGeneration));
+      const generation = person.is_root || rootSpouseIds.has(person.id) ? "Thủy tổ" : person.generation == null ? "" : String(Math.max(1, person.generation - rootGeneration));
       const photo = photoByPersonId?.get(person.id);
       const noteLines = splitNote(person.bio ?? "");
 
