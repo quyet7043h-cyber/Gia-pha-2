@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { IconMaximize, IconMinimize } from "@/components/icons";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import type { ForceGraph3DInstance, NodeObject } from "3d-force-graph";
 import { CanvasTexture, LinearFilter, Object3D, Sprite, SpriteMaterial, SRGBColorSpace } from "three";
 import SpriteText from "three-spritetext";
@@ -280,6 +281,7 @@ export function Tree3DView({
   // Toàn màn hình bằng overlay CSS (portal ra <body>) như cây 2D — vào/ra sẽ
   // tạo node mới nên effect dựng lại graph (fs nằm trong deps).
   const [fs, setFs] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ src: string; caption: string } | null>(null);
   const [showGuide, setShowGuide] = useState(true); // ẩn/hiện bảng hướng dẫn
   // Chế độ "mở rộng dần" (bấm để bung/thu nhánh) — tăng hiệu năng cho họ lớn.
   // null = tự động (bật khi họ đông); người dùng bấm nút sẽ ghi đè.
@@ -684,6 +686,7 @@ export function Tree3DView({
             graph?.graphData(getVisible());
           }
           flyTo(node);
+          setSelectedImage({ src: node.img, caption: node.name });
         });
       // Xếp sát lại (~1/2 khoảng cách cũ) cho đỡ trống trải mà không quá chật.
       graph.d3Force("charge")?.strength(-180);
@@ -759,6 +762,15 @@ export function Tree3DView({
           : `relative overflow-hidden ${className ?? ""}`
       }
     >
+      {selectedImage && (
+        <ImageLightbox
+          images={[selectedImage]}
+          index={0}
+          onIndexChange={() => undefined}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
+
       {/* Chỉ canvas 3D mount vào đây; overlay là SIBLING phía sau nên nổi trên. */}
       <div ref={elRef} className="absolute inset-0" />
       {(isLoading || !photosReady) && (
