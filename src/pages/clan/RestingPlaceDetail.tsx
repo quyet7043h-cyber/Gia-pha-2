@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { useConfirm } from "@/components/ConfirmDialog";
 import {
   IconBell,
@@ -53,6 +54,7 @@ export default function RestingPlaceDetail() {
   const askConfirm = useConfirm();
   const canEdit = canEditClan(clan);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [lightboxImage, setLightboxImage] = useState<{ src: string; caption: string } | null>(null);
 
   const { data: place, isLoading } = useQuery({
     queryKey: ["resting-place", graveId, userId],
@@ -267,7 +269,15 @@ export default function RestingPlaceDetail() {
               {place.photos.map((ph) => (
                 <div key={ph.id} className="relative aspect-square overflow-hidden rounded-md bg-muted">
                   {photoUrls?.get(ph.path) ? (
-                    <img src={photoUrls.get(ph.path)} alt={ph.caption ?? ""} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                    <img
+                      src={photoUrls.get(ph.path)}
+                      alt={ph.caption ?? title}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover cursor-zoom-in"
+                      data-no-lightbox
+                      onClick={() => setLightboxImage({ src: photoUrls.get(ph.path)!, caption: ph.caption || title })}
+                    />
                   ) : (
                     <div className="h-full w-full grid place-items-center">
                       <IconGrave className="h-5 w-5 text-muted-foreground" />
@@ -504,6 +514,14 @@ export default function RestingPlaceDetail() {
         </Card>
       )}
 
+      {lightboxImage && (
+        <ImageLightbox
+          images={[lightboxImage]}
+          index={0}
+          onIndexChange={() => undefined}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
       <QrCodeModal
         open={qrOpen}
         onClose={() => setQrOpen(false)}

@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { ClanLayout } from "@/components/ClanLayout";
+import { GlobalImageViewer } from "@/components/GlobalImageViewer";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import { CriticalBanner } from "@/components/CriticalBanner";
@@ -100,6 +101,7 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
+      <GlobalImageViewer />
       <ScrollManager />
       {/* Thứ tự quan trọng: DocumentTitle đặt tiêu đề route trước, rồi
           AnalyticsTracker mới gửi pageview kèm tiêu đề đó. */}
